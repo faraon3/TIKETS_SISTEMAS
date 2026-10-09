@@ -500,6 +500,7 @@
     position: relative;
     overflow: hidden;
     animation: slideIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
   }
 
   @keyframes slideIn {
@@ -584,6 +585,9 @@
   .badge.abierto { background: rgba(124, 92, 255, 0.12); color: #a58cff; }
   .badge.proceso { background: rgba(245, 158, 11, 0.12); color: #fbbf24; }
   .badge.cerrado { background: rgba(16, 185, 129, 0.12); color: #34d399; }
+  .badge.alta { background: rgba(239, 68, 68, 0.12); color: #f87171; }
+  .badge.media { background: rgba(245, 158, 11, 0.12); color: #fbbf24; }
+  .badge.baja { background: rgba(16, 185, 129, 0.12); color: #34d399; }
 
   .badge-vencido {
     background: rgba(239, 68, 68, 0.15);
@@ -613,6 +617,8 @@
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
+    position: relative;
+    z-index: 2;
   }
 
   .empty {
@@ -881,15 +887,230 @@
   }
   .pdf-btn-secondary:hover { background: #e5e5ec; }
 
+  /* ============ MODAL DE DETALLE DEL TICKET ============ */
+  .ticket-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .ticket-modal-overlay.activo { display: flex; }
+
+  .ticket-modal {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    max-width: 640px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+  }
+
+  .ticket-modal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ticket-modal-head h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    margin-bottom: 6px;
+    word-break: break-word;
+  }
+
+  .ticket-modal-close {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    display: grid;
+    place-items: center;
+    transition: var(--transition);
+    flex-shrink: 0;
+  }
+  .ticket-modal-close:hover {
+    background: var(--surface-hover);
+    color: var(--text);
+    border-color: var(--border-strong);
+  }
+
+  .ticket-modal-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+  .ticket-modal-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .ticket-modal-desc {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    font-size: 13.5px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 20px;
+    word-break: break-word;
+  }
+
+  body.light .ticket-modal-desc {
+    background: rgba(0, 0, 0, 0.02);
+  }
+
+  .ticket-modal-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+
+  /* TIMELINE */
+  .timeline-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .timeline {
+    position: relative;
+    padding-left: 22px;
+    margin-bottom: 20px;
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 6px;
+  }
+
+  .timeline::-webkit-scrollbar { width: 4px; }
+  .timeline::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 4px;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 6px;
+    bottom: 6px;
+    width: 1px;
+    background: var(--border-strong);
+  }
+
+  .timeline-item {
+    position: relative;
+    padding-bottom: 16px;
+    font-size: 13px;
+    animation: slideIn 0.3s ease;
+  }
+  .timeline-item:last-child { padding-bottom: 0; }
+
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -22px;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg-elev);
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+
+  .timeline-item.estado::before { background: var(--warning); box-shadow: 0 0 0 2px var(--warning); }
+  .timeline-item.comentario::before { background: var(--accent-2); box-shadow: 0 0 0 2px var(--accent-2); }
+  .timeline-item.creacion::before { background: var(--success); box-shadow: 0 0 0 2px var(--success); }
+
+  .timeline-item-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+  }
+
+  .timeline-item-autor {
+    font-weight: 600;
+    color: var(--text);
+    font-size: 12.5px;
+  }
+
+  .timeline-item-fecha {
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .timeline-item-texto {
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.5;
+    word-break: break-word;
+  }
+
+  /* FORMULARIO COMENTARIO */
+  .comment-form {
+    display: grid;
+    gap: 10px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .comment-form input,
+  .comment-form textarea {
+    font-size: 13.5px;
+    padding: 12px 14px;
+  }
+
+  .comment-form textarea {
+    min-height: 70px;
+    resize: vertical;
+  }
+
+  .comment-form button {
+    padding: 12px 18px;
+    font-size: 13.5px;
+    width: 100%;
+  }
+
   /* ============ RESPONSIVE ============ */
 
-  /* Tablets grandes y laptops chicas */
   @media (max-width: 900px) {
     .kpi-grid { grid-template-columns: repeat(3, 1fr); }
     .pdf-kpis { grid-template-columns: repeat(3, 1fr); }
   }
 
-  /* Tablets y móviles grandes */
   @media (max-width: 720px) {
     .kpi-grid { grid-template-columns: repeat(2, 1fr); }
     .charts-grid { grid-template-columns: 1fr; }
@@ -899,7 +1120,6 @@
     .pdf-preview { padding: 24px; }
   }
 
-  /* ============ MÓVIL (ajustes finos) ============ */
   @media (max-width: 560px) {
     .container {
       padding: 24px 14px 60px;
@@ -910,7 +1130,6 @@
     .stats-card { padding: 18px; }
     .chart-card { padding: 16px !important; }
 
-    /* Header */
     header {
       flex-wrap: wrap;
       gap: 10px;
@@ -923,7 +1142,6 @@
     .btn-icon { width: 34px; height: 34px; font-size: 14px; }
     .live-dot { padding: 5px 10px; font-size: 10px; }
 
-    /* KPIs */
     .kpi-grid {
       grid-template-columns: repeat(2, 1fr);
       gap: 10px;
@@ -934,30 +1152,19 @@
     .kpi-value { font-size: 24px; }
     .kpi-sub { font-size: 10.5px; margin-top: 6px; }
 
-    /* Stats card */
     .stats-head {
       flex-direction: column;
       gap: 12px;
       margin-bottom: 16px;
     }
     .stats-percent { font-size: 22px; }
-    .stats-meta {
-      font-size: 12px;
-      gap: 12px;
-      width: 100%;
-    }
-    .stats-foot {
-      font-size: 11.5px;
-      gap: 12px;
-      flex-direction: column;
-    }
+    .stats-meta { font-size: 12px; gap: 12px; width: 100%; }
+    .stats-foot { font-size: 11.5px; gap: 12px; flex-direction: column; }
 
-    /* Gráficos */
     .charts-grid { gap: 12px; }
     .chart-wrap { height: 180px; }
     .chart-donut { height: 200px; }
 
-    /* Formulario */
     .form-grid { gap: 12px; }
     .form-row { grid-template-columns: 1fr; gap: 12px; }
     input, textarea, select { padding: 12px 14px; font-size: 14px; }
@@ -965,7 +1172,6 @@
     .btn { padding: 13px 18px; font-size: 14px; }
     .btn-primary { padding: 14px 18px; }
 
-    /* Filtros y búsqueda */
     .filtros {
       gap: 6px;
       margin-bottom: 16px;
@@ -980,11 +1186,9 @@
     .search-wrap input { padding: 12px 14px 12px 38px; font-size: 14px; }
     .search-icon { left: 13px; font-size: 13px; }
 
-    /* Tickets header */
     .tickets-header { flex-direction: column; align-items: stretch; gap: 10px; }
     .tickets-header .btn { width: 100%; }
 
-    /* Tarjeta de ticket */
     .ticket { padding: 14px 16px; }
     .ticket-head { flex-direction: column; gap: 8px; }
     .ticket h3 { font-size: 14px; line-height: 1.4; }
@@ -992,36 +1196,16 @@
     .ticket-head > span { display: flex; flex-wrap: wrap; gap: 6px; }
     .badge { font-size: 10px; padding: 3px 8px; }
     .badge-vencido { margin-left: 0; }
-    .ticket-meta {
-      font-size: 11px;
-      gap: 8px 12px;
-      margin-bottom: 12px;
-    }
+    .ticket-meta { font-size: 11px; gap: 8px 12px; margin-bottom: 12px; }
     .ticket-actions { gap: 6px; }
     .ticket-actions .btn { flex: 1; min-width: 0; }
     .btn-ghost { font-size: 11.5px; padding: 8px 10px; }
 
-    /* Card titles */
-    .card-title {
-      font-size: 11.5px;
-      letter-spacing: 0.06em;
-      margin-bottom: 14px;
-    }
+    .card-title { font-size: 11.5px; letter-spacing: 0.06em; margin-bottom: 14px; }
 
-    /* Modal PDF en móvil */
     .pdf-overlay { padding: 10px; }
-    .pdf-preview {
-      padding: 16px;
-      max-height: 95vh;
-      border-radius: 10px;
-    }
-    .pdf-header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 10px;
-      padding-bottom: 14px;
-      margin-bottom: 16px;
-    }
+    .pdf-preview { padding: 16px; max-height: 95vh; border-radius: 10px; }
+    .pdf-header { flex-direction: column; align-items: flex-start; gap: 10px; padding-bottom: 14px; margin-bottom: 16px; }
     .pdf-header h2 { font-size: 17px; }
     .pdf-header p { font-size: 11px; }
     .pdf-logo { width: 40px; height: 40px; font-size: 20px; }
@@ -1036,9 +1220,14 @@
     .pdf-actions { flex-direction: column-reverse; gap: 8px; }
     .pdf-btn { width: 100%; padding: 12px; font-size: 13px; }
     .pdf-footer { font-size: 9px; flex-direction: column; gap: 6px; }
+
+    .ticket-modal { padding: 20px 18px; }
+    .ticket-modal-head h2 { font-size: 16px; }
+    .ticket-modal-actions { gap: 6px; }
+    .ticket-modal-actions .btn { flex: 1; }
+    .timeline { max-height: 240px; }
   }
 
-  /* Móviles muy pequeños */
   @media (max-width: 380px) {
     .container {
       padding: 20px 12px 50px;
@@ -1051,6 +1240,8 @@
     header h1 { font-size: 16px; }
     .ticket-actions { flex-direction: column; }
     .ticket-actions .btn { width: 100%; }
+    .ticket-modal-actions { flex-direction: column; }
+    .ticket-modal-actions .btn { width: 100%; }
   }
 </style>
 </head>
@@ -1204,15 +1395,24 @@
     }
 
     const ahora = new Date();
+    const fechaFmt = ahora.toLocaleString('es-CO', {
+      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+    });
+
     const nuevoTicket = {
       id: Date.now(),
       titulo, descripcion, solicitante, prioridad,
       estado: 'abierto',
       fechaCreacion: ahora.toISOString(),
       fechaCierre: null,
-      fecha: ahora.toLocaleString('es-CO', {
-        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
-      })
+      fecha: fechaFmt,
+      historial: [{
+        tipo: 'creacion',
+        autor: solicitante,
+        texto: `Ticket creado con prioridad ${prioridad.toUpperCase()}`,
+        fecha: fechaFmt,
+        timestamp: ahora.toISOString()
+      }]
     };
 
     tickets.unshift(nuevoTicket);
@@ -1235,15 +1435,36 @@
     const t = tickets.find(x => x.id === id);
     if (!t) return;
 
+    if (!t.historial) t.historial = [];
+
+    const ahora = new Date();
+    const fechaFmt = ahora.toLocaleString('es-CO', {
+      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+    });
+
+    let textoCambio = '';
+
     if (t.estado === 'abierto') {
       t.estado = 'proceso';
+      textoCambio = 'Estado: ABIERTO → EN PROCESO';
     } else if (t.estado === 'proceso') {
       t.estado = 'cerrado';
-      t.fechaCierre = new Date().toISOString();
+      t.fechaCierre = ahora.toISOString();
+      textoCambio = 'Estado: EN PROCESO → CERRADO';
     } else {
       t.estado = 'abierto';
       t.fechaCierre = null;
+      textoCambio = 'Estado: CERRADO → ABIERTO (reabierto)';
     }
+
+    t.historial.push({
+      tipo: 'estado',
+      autor: 'Sistema',
+      texto: textoCambio,
+      fecha: fechaFmt,
+      timestamp: ahora.toISOString()
+    });
+
     guardar();
     render();
   }
@@ -1358,8 +1579,9 @@
     } else {
       lista.innerHTML = visibles.map(t => {
         const vencido = estaVencido(t);
+        const numComentarios = (t.historial || []).length;
         return `
-        <article class="ticket ${t.prioridad} ${vencido ? 'vencido' : ''}">
+        <article class="ticket ${t.prioridad} ${vencido ? 'vencido' : ''}" onclick="abrirTicket(${t.id})">
           <div class="ticket-head">
             <h3>${escapeHtml(t.titulo)}</h3>
             <span>
@@ -1372,10 +1594,11 @@
             <span>👤 ${escapeHtml(t.solicitante)}</span>
             <span>⚡ ${t.prioridad} · SLA ${SLA[t.prioridad]}h</span>
             <span>🕒 ${t.fecha}</span>
+            ${numComentarios > 0 ? `<span>💬 ${numComentarios} actividad${numComentarios !== 1 ? 'es' : ''}</span>` : ''}
           </div>
           <div class="ticket-actions">
-            <button class="btn btn-ghost" onclick="cambiarEstado(${t.id})">Cambiar estado</button>
-            <button class="btn btn-ghost" onclick="eliminar(${t.id})">Eliminar</button>
+            <button class="btn btn-ghost" onclick="event.stopPropagation(); cambiarEstado(${t.id})">Cambiar estado</button>
+            <button class="btn btn-ghost" onclick="event.stopPropagation(); eliminar(${t.id})">Eliminar</button>
           </div>
         </article>`;
       }).join('');
@@ -1392,7 +1615,7 @@
       return;
     }
 
-    const encabezados = ['ID', 'Título', 'Descripción', 'Solicitante', 'Prioridad', 'Estado', 'Fecha creación', 'Fecha cierre', 'Vencido'];
+    const encabezados = ['ID', 'Título', 'Descripción', 'Solicitante', 'Prioridad', 'Estado', 'Fecha creación', 'Fecha cierre', 'Vencido', 'Actividad'];
 
     const filas = tickets.map(t => [
       t.id,
@@ -1403,7 +1626,8 @@
       t.estado,
       new Date(t.fechaCreacion).toLocaleString('es-CO'),
       t.fechaCierre ? new Date(t.fechaCierre).toLocaleString('es-CO') : '',
-      estaVencido(t) ? 'SÍ' : 'NO'
+      estaVencido(t) ? 'SÍ' : 'NO',
+      (t.historial || []).length
     ]);
 
     const escapar = (v) => `"${String(v).replace(/"/g, '""')}"`;
@@ -1641,6 +1865,151 @@
     actualizarGraficos();
   }
 
+  /* ============ MODAL DE DETALLE ============ */
+  let ticketAbiertoId = null;
+
+  function abrirTicket(id) {
+    const t = tickets.find(x => x.id === id);
+    if (!t) return;
+    ticketAbiertoId = id;
+
+    const vencido = estaVencido(t);
+    const historial = (t.historial || []).slice().reverse();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'ticket-modal-overlay activo';
+    overlay.onclick = (e) => { if (e.target === overlay) cerrarTicketModal(); };
+
+    overlay.innerHTML = `
+      <div class="ticket-modal">
+        <div class="ticket-modal-head">
+          <div style="flex:1">
+            <h2>${escapeHtml(t.titulo)}</h2>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+              ${vencido ? '<span class="badge badge-vencido">⚠ VENCIDO</span>' : ''}
+              <span class="badge ${t.estado}">${t.estado.toUpperCase()}</span>
+              <span class="badge ${t.prioridad}">${t.prioridad.toUpperCase()}</span>
+            </div>
+          </div>
+          <button class="ticket-modal-close" onclick="cerrarTicketModal()">✕</button>
+        </div>
+
+        <div class="ticket-modal-meta">
+          <span>👤 ${escapeHtml(t.solicitante)}</span>
+          <span>⚡ SLA ${SLA[t.prioridad]}h</span>
+          <span>🕒 ${t.fecha}</span>
+          ${t.fechaCierre ? `<span>✅ Cerrado: ${new Date(t.fechaCierre).toLocaleString('es-CO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : ''}
+        </div>
+
+        ${t.descripcion ? `
+          <div class="ticket-modal-desc">${escapeHtml(t.descripcion)}</div>
+        ` : ''}
+
+        <div class="ticket-modal-actions">
+          <button class="btn btn-ghost" onclick="cambiarEstado(${t.id}); abrirTicket(${t.id});">
+            Cambiar estado (${t.estado === 'abierto' ? '→ proceso' : t.estado === 'proceso' ? '→ cerrado' : '→ abierto'})
+          </button>
+          <button class="btn btn-ghost" onclick="eliminarDesdeModal(${t.id})">
+            Eliminar
+          </button>
+        </div>
+
+        <div class="timeline-title">
+          <span>📝 Historial de actividad</span>
+          <span style="color:var(--text-dim); font-weight:400; text-transform:none; letter-spacing:0;">(${historial.length})</span>
+        </div>
+
+        <div class="timeline">
+          ${historial.length === 0 
+            ? '<div class="timeline-item creacion"><div class="timeline-item-texto" style="color:var(--text-dim);">Sin actividad registrada</div></div>'
+            : historial.map(h => `
+                <div class="timeline-item ${h.tipo}">
+                  <div class="timeline-item-head">
+                    <span class="timeline-item-autor">${escapeHtml(h.autor)}</span>
+                    <span class="timeline-item-fecha">${h.fecha}</span>
+                  </div>
+                  <div class="timeline-item-texto">${escapeHtml(h.texto)}</div>
+                </div>
+              `).join('')
+          }
+        </div>
+
+        ${t.estado !== 'cerrado' ? `
+          <div class="comment-form">
+            <input id="comentAutor" placeholder="Tu nombre" autocomplete="off" value="${escapeHtml(localStorage.getItem('autorDefault') || '')}" />
+            <textarea id="comentTexto" placeholder="Escribe un comentario o actualización..."></textarea>
+            <button class="btn btn-primary" onclick="agregarComentario(${t.id})">
+              Agregar comentario →
+            </button>
+          </div>
+        ` : `
+          <div class="comment-form" style="text-align:center; padding: 16px; color: var(--text-dim); font-size: 13px;">
+            🔒 Este ticket está cerrado. Cambia el estado para agregar comentarios.
+          </div>
+        `}
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+    setTimeout(() => {
+      document.getElementById('comentAutor')?.focus();
+    }, 100);
+  }
+
+  function cerrarTicketModal() {
+    const overlay = document.querySelector('.ticket-modal-overlay');
+    if (overlay) overlay.remove();
+    ticketAbiertoId = null;
+  }
+
+  function eliminarDesdeModal(id) {
+    if (!confirm('¿Eliminar este ticket?')) return;
+    tickets = tickets.filter(x => x.id !== id);
+    guardar();
+    cerrarTicketModal();
+    render();
+  }
+
+  function agregarComentario(id) {
+    const t = tickets.find(x => x.id === id);
+    if (!t) return;
+
+    const autorInput = document.getElementById('comentAutor');
+    const textoInput = document.getElementById('comentTexto');
+    const autor = autorInput.value.trim();
+    const texto = textoInput.value.trim();
+
+    if (!autor) {
+      alert('Por favor escribe tu nombre');
+      autorInput.focus();
+      return;
+    }
+    if (!texto) {
+      alert('El comentario no puede estar vacío');
+      textoInput.focus();
+      return;
+    }
+
+    if (!t.historial) t.historial = [];
+
+    const ahora = new Date();
+    t.historial.push({
+      tipo: 'comentario',
+      autor,
+      texto,
+      fecha: ahora.toLocaleString('es-CO', {
+        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+      }),
+      timestamp: ahora.toISOString()
+    });
+
+    localStorage.setItem('autorDefault', autor);
+    guardar();
+    render();
+
+    abrirTicket(id);
+  }
+
   /* ============ REPORTE PDF ============ */
   function generarReportePDF() {
     if (tickets.length === 0) {
@@ -1867,10 +2236,6 @@
       }
     }
   }
-
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') cerrarPDF();
-  });
 
   /* ============ INIT ============ */
   document.addEventListener('DOMContentLoaded', () => {
