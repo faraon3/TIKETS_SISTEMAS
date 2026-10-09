@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mesa de Ayuda</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#7c5cff">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -38,6 +40,7 @@
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
     line-height: 1.5;
+    transition: background 0.3s, color 0.3s;
   }
 
   body::before {
@@ -49,6 +52,7 @@
       radial-gradient(circle at 85% 100%, rgba(34, 211, 238, 0.1), transparent 45%);
     pointer-events: none;
     z-index: 0;
+    transition: background 0.3s;
   }
 
   .container {
@@ -113,6 +117,29 @@
     50% { opacity: 0.4; }
   }
 
+  .btn-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 15px;
+    display: grid;
+    place-items: center;
+    transition: var(--transition);
+  }
+  .btn-icon:hover {
+    border-color: var(--border-strong);
+    background: var(--surface-hover);
+    transform: translateY(-1px);
+  }
+  .btn-icon.activo {
+    background: rgba(16, 185, 129, 0.12);
+    border-color: rgba(16, 185, 129, 0.3);
+  }
+
   /* KPI GRID */
   .kpi-grid {
     display: grid;
@@ -172,7 +199,6 @@
     margin-top: 8px;
   }
 
-  /* KPI de peligro (vencidos) */
   .kpi-danger { border-color: rgba(239, 68, 68, 0.25); }
   .kpi-danger .kpi-value {
     background: linear-gradient(135deg, #ef4444, #f87171);
@@ -587,6 +613,36 @@
     opacity: 0.4;
   }
 
+  /* TEMA CLARO */
+  body.light {
+    --bg: #f7f7fa;
+    --bg-elev: #ffffff;
+    --surface: rgba(0, 0, 0, 0.03);
+    --surface-hover: rgba(0, 0, 0, 0.06);
+    --border: rgba(0, 0, 0, 0.08);
+    --border-strong: rgba(0, 0, 0, 0.18);
+    --text: #0a0a0f;
+    --text-muted: #6a6a74;
+    --text-dim: #a0a0a8;
+  }
+
+  body.light::before {
+    background:
+      radial-gradient(circle at 15% 0%, rgba(124, 92, 255, 0.08), transparent 45%),
+      radial-gradient(circle at 85% 100%, rgba(34, 211, 238, 0.06), transparent 45%);
+  }
+
+  body.light .chip.active {
+    background: #0a0a0f;
+    color: #ffffff;
+  }
+
+  body.light input,
+  body.light textarea,
+  body.light select {
+    background: rgba(0, 0, 0, 0.02);
+  }
+
   /* RESPONSIVE */
   @media (max-width: 900px) {
     .kpi-grid { grid-template-columns: repeat(3, 1fr); }
@@ -615,6 +671,8 @@
       <h1>Mesa de Ayuda</h1>
       <p>Panel de control y gestión de tickets</p>
     </div>
+    <button class="btn-icon" id="btnNotif" title="Activar notificaciones" onclick="activarNotificaciones()">🔔</button>
+    <button class="btn-icon" id="btnTema" title="Cambiar tema" onclick="toggleTema()">🌙</button>
     <div class="live-dot" title="Datos en vivo">
       <span></span> Live
     </div>
@@ -735,9 +793,7 @@
   let tickets = JSON.parse(localStorage.getItem('tickets_v3')) || [];
   let filtroActual = 'todos';
 
-  // SLA por prioridad (en horas)
   const SLA = { alta: 4, media: 24, baja: 72 };
-  // Orden de prioridad para ordenar la lista
   const ORDEN_PRIORIDAD = { alta: 1, media: 2, baja: 3 };
 
   const guardar = () => localStorage.setItem('tickets_v3', JSON.stringify(tickets));
@@ -755,7 +811,7 @@
     }
 
     const ahora = new Date();
-    tickets.unshift({
+    const nuevoTicket = {
       id: Date.now(),
       titulo, descripcion, solicitante, prioridad,
       estado: 'abierto',
@@ -764,10 +820,15 @@
       fecha: ahora.toLocaleString('es-CO', {
         day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
       })
-    });
+    };
 
+    tickets.unshift(nuevoTicket);
     guardar();
     render();
+
+    if (prioridad === 'alta') {
+      notificarAltaPrioridad(nuevoTicket);
+    }
 
     document.getElementById('titulo').value = '';
     document.getElementById('descripcion').value = '';
@@ -881,7 +942,6 @@
       ? [...tickets]
       : tickets.filter(t => t.estado === filtroActual);
 
-    // Filtro por búsqueda
     if (query) {
       visibles = visibles.filter(t =>
         t.titulo.toLowerCase().includes(query) ||
@@ -890,7 +950,6 @@
       );
     }
 
-    // Ordenar: primero por prioridad, luego por fecha (más reciente arriba)
     visibles.sort((a, b) => {
       const p = ORDEN_PRIORIDAD[a.prioridad] - ORDEN_PRIORIDAD[b.prioridad];
       if (p !== 0) return p;
@@ -959,7 +1018,6 @@
       .map(fila => fila.map(escapar).join(','))
       .join('\n');
 
-    // BOM para que Excel respete tildes y ñ
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1005,6 +1063,11 @@
       );
     }
 
+    const textColor = document.body.classList.contains('light') ? '#6a6a74' : '#5a5a64';
+    const gridColor = document.body.classList.contains('light')
+      ? 'rgba(0,0,0,0.06)'
+      : 'rgba(255,255,255,0.04)';
+
     const data = {
       labels,
       datasets: [{
@@ -1030,6 +1093,9 @@
 
     if (chartTendencia) {
       chartTendencia.data = data;
+      chartTendencia.options.scales.y.ticks.color = textColor;
+      chartTendencia.options.scales.x.ticks.color = textColor;
+      chartTendencia.options.scales.y.grid.color = gridColor;
       chartTendencia.update();
       return;
     }
@@ -1056,15 +1122,15 @@
           y: {
             beginAtZero: true,
             ticks: {
-              color: '#5a5a64',
+              color: textColor,
               font: { size: 11 },
               stepSize: 1,
               precision: 0
             },
-            grid: { color: 'rgba(255,255,255,0.04)' }
+            grid: { color: gridColor }
           },
           x: {
-            ticks: { color: '#5a5a64', font: { size: 11 } },
+            ticks: { color: textColor, font: { size: 11 } },
             grid: { display: false }
           }
         }
@@ -1080,6 +1146,8 @@
     const media = tickets.filter(t => t.prioridad === 'media').length;
     const baja = tickets.filter(t => t.prioridad === 'baja').length;
 
+    const textColor = document.body.classList.contains('light') ? '#6a6a74' : '#8a8a94';
+
     const data = {
       labels: ['Alta', 'Media', 'Baja'],
       datasets: [{
@@ -1092,6 +1160,7 @@
 
     if (chartPrioridad) {
       chartPrioridad.data = data;
+      chartPrioridad.options.plugins.legend.labels.color = textColor;
       chartPrioridad.update();
       return;
     }
@@ -1107,7 +1176,7 @@
           legend: {
             position: 'bottom',
             labels: {
-              color: '#8a8a94',
+              color: textColor,
               font: { size: 12, family: 'Inter' },
               padding: 14,
               usePointStyle: true,
@@ -1129,6 +1198,81 @@
     });
   }
 
+  /* ============ NOTIFICACIONES ============ */
+  function activarNotificaciones() {
+    if (!('Notification' in window)) {
+      alert('Tu navegador no soporta notificaciones');
+      return;
+    }
+
+    if (Notification.permission === 'granted') {
+      alert('Las notificaciones ya están activadas ✅');
+      return;
+    }
+
+    Notification.requestPermission().then(perm => {
+      const btn = document.getElementById('btnNotif');
+      if (perm === 'granted') {
+        btn.classList.add('activo');
+        new Notification('Notificaciones activadas', {
+          body: 'Recibirás alertas de tickets de alta prioridad.',
+          icon: 'icon-192.png'
+        });
+      } else {
+        btn.textContent = '🔕';
+      }
+    });
+  }
+
+  function notificarAltaPrioridad(ticket) {
+    if (!('Notification' in window)) return;
+    if (Notification.permission !== 'granted') return;
+
+    new Notification('🚨 Ticket de alta prioridad', {
+      body: `${ticket.titulo}\nSolicitante: ${ticket.solicitante}`,
+      icon: 'icon-192.png',
+      tag: 'ticket-' + ticket.id,
+      requireInteraction: true
+    });
+  }
+
+  /* ============ TOGGLE TEMA ============ */
+  function toggleTema() {
+    document.body.classList.toggle('light');
+    const esClaro = document.body.classList.contains('light');
+    document.getElementById('btnTema').textContent = esClaro ? '☀️' : '🌙';
+    localStorage.setItem('tema', esClaro ? 'light' : 'dark');
+
+    if (chartTendencia) { chartTendencia.destroy(); chartTendencia = null; }
+    if (chartPrioridad) { chartPrioridad.destroy(); chartPrioridad = null; }
+    actualizarGraficos();
+  }
+
+  /* ============ INIT ============ */
+  document.addEventListener('DOMContentLoaded', () => {
+    // Tema guardado
+    if (localStorage.getItem('tema') === 'light') {
+      document.body.classList.add('light');
+      const btn = document.getElementById('btnTema');
+      if (btn) btn.textContent = '☀️';
+    }
+
+    // Estado del botón de notificaciones
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const btn = document.getElementById('btnNotif');
+      if (btn) btn.classList.add('activo');
+    }
+  });
+
+  /* ============ PWA ============ */
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+        .then(() => console.log('✅ Service Worker registrado'))
+        .catch(err => console.warn('⚠ SW no registrado:', err));
+    });
+  }
+
   function escapeHtml(str) {
     return String(str).replace(/[&<>"']/g, c => ({
       '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
@@ -1137,7 +1281,6 @@
 
   render();
 
-  // Recalcular vencidos cada minuto (para que el semáforo se actualice solo)
   setInterval(() => {
     if (tickets.some(estaVencido)) render();
   }, 60000);
