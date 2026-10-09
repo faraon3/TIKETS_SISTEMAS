@@ -10,6 +10,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
   :root {
     --bg: #08080c;
@@ -643,15 +645,242 @@
     background: rgba(0, 0, 0, 0.02);
   }
 
+  /* MODAL DE VISTA PREVIA PDF */
+  .pdf-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .pdf-overlay.activo { display: flex; }
+
+  .pdf-preview {
+    background: #ffffff;
+    color: #0a0a0f;
+    border-radius: 12px;
+    padding: 40px;
+    max-width: 820px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+    font-family: 'Inter', sans-serif;
+  }
+
+  .pdf-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #7c5cff;
+    margin-bottom: 24px;
+  }
+
+  .pdf-header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .pdf-logo {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #7c5cff, #22d3ee);
+    display: grid;
+    place-items: center;
+    font-size: 24px;
+    color: #fff;
+  }
+
+  .pdf-header h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0a0a0f;
+    margin-bottom: 2px;
+  }
+
+  .pdf-header p {
+    font-size: 12px;
+    color: #6a6a74;
+  }
+
+  .pdf-fecha {
+    font-size: 11px;
+    color: #6a6a74;
+    text-align: right;
+  }
+
+  .pdf-section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #7c5cff;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 24px 0 12px;
+  }
+
+  .pdf-kpis {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .pdf-kpi {
+    background: #f7f7fa;
+    border: 1px solid #e5e5ec;
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+  }
+
+  .pdf-kpi-label {
+    font-size: 10px;
+    color: #6a6a74;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+  }
+
+  .pdf-kpi-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: #0a0a0f;
+  }
+
+  .pdf-kpi.danger .pdf-kpi-value { color: #ef4444; }
+
+  .pdf-two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .pdf-box {
+    background: #f7f7fa;
+    border: 1px solid #e5e5ec;
+    border-radius: 10px;
+    padding: 16px;
+  }
+
+  .pdf-box h4 {
+    font-size: 12px;
+    color: #6a6a74;
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+
+  .pdf-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    padding: 6px 0;
+    border-bottom: 1px solid #eaeaf0;
+  }
+  .pdf-row:last-child { border-bottom: none; }
+  .pdf-row b { font-weight: 600; }
+
+  .pdf-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    margin-bottom: 24px;
+  }
+
+  .pdf-table th {
+    text-align: left;
+    background: #f7f7fa;
+    padding: 10px 8px;
+    font-weight: 600;
+    color: #4a4a54;
+    border-bottom: 2px solid #e5e5ec;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .pdf-table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #eaeaf0;
+    color: #2a2a34;
+  }
+
+  .pdf-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 100px;
+    font-size: 10px;
+    font-weight: 600;
+  }
+
+  .pdf-badge.alta { background: #fee2e2; color: #b91c1c; }
+  .pdf-badge.media { background: #fef3c7; color: #b45309; }
+  .pdf-badge.baja { background: #d1fae5; color: #047857; }
+  .pdf-badge.abierto { background: #ede9fe; color: #6d28d9; }
+  .pdf-badge.proceso { background: #fef3c7; color: #b45309; }
+  .pdf-badge.cerrado { background: #d1fae5; color: #047857; }
+
+  .pdf-footer {
+    margin-top: 30px;
+    padding-top: 16px;
+    border-top: 1px solid #e5e5ec;
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #8a8a94;
+  }
+
+  .pdf-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+    justify-content: flex-end;
+  }
+
+  .pdf-btn {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+
+  .pdf-btn-primary {
+    background: linear-gradient(135deg, #7c5cff, #9d7cff);
+    color: white;
+    box-shadow: 0 4px 12px rgba(124, 92, 255, 0.3);
+  }
+  .pdf-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(124, 92, 255, 0.5); }
+
+  .pdf-btn-secondary {
+    background: #f0f0f5;
+    color: #4a4a54;
+  }
+  .pdf-btn-secondary:hover { background: #e5e5ec; }
+
   /* RESPONSIVE */
   @media (max-width: 900px) {
     .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+    .pdf-kpis { grid-template-columns: repeat(3, 1fr); }
   }
 
   @media (max-width: 720px) {
     .kpi-grid { grid-template-columns: repeat(2, 1fr); }
     .charts-grid { grid-template-columns: 1fr; }
     .chart-wrap { height: 200px; }
+    .pdf-two-col { grid-template-columns: 1fr; }
+    .pdf-kpis { grid-template-columns: repeat(2, 1fr); }
+    .pdf-preview { padding: 24px; }
   }
 
   @media (max-width: 560px) {
@@ -673,6 +902,7 @@
     </div>
     <button class="btn-icon" id="btnNotif" title="Activar notificaciones" onclick="activarNotificaciones()">🔔</button>
     <button class="btn-icon" id="btnTema" title="Cambiar tema" onclick="toggleTema()">🌙</button>
+    <button class="btn-icon" id="btnPDF" title="Generar reporte PDF" onclick="generarReportePDF()">📄</button>
     <div class="live-dot" title="Datos en vivo">
       <span></span> Live
     </div>
@@ -1248,16 +1478,245 @@
     actualizarGraficos();
   }
 
+  /* ============ REPORTE PDF ============ */
+  function generarReportePDF() {
+    if (tickets.length === 0) {
+      alert('No hay tickets para generar el reporte');
+      return;
+    }
+
+    const total = tickets.length;
+    const abiertos = tickets.filter(t => t.estado === 'abierto').length;
+    const proceso = tickets.filter(t => t.estado === 'proceso').length;
+    const cerrados = tickets.filter(t => t.estado === 'cerrado').length;
+    const vencidos = tickets.filter(estaVencido).length;
+    const pct = total ? Math.round((cerrados / total) * 100) : 0;
+
+    const alta = tickets.filter(t => t.prioridad === 'alta').length;
+    const media = tickets.filter(t => t.prioridad === 'media').length;
+    const baja = tickets.filter(t => t.prioridad === 'baja').length;
+
+    const cerradosConTiempo = tickets.filter(t => t.fechaCierre && t.fechaCreacion);
+    let tiempoProm = '—';
+    if (cerradosConTiempo.length) {
+      const sumaMs = cerradosConTiempo.reduce((acc, t) => {
+        return acc + (new Date(t.fechaCierre) - new Date(t.fechaCreacion));
+      }, 0);
+      tiempoProm = formatearDuracion(sumaMs / cerradosConTiempo.length);
+    }
+
+    const recientes = [...tickets]
+      .sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion))
+      .slice(0, 10);
+
+    const vencidosList = tickets.filter(estaVencido).slice(0, 10);
+
+    const fechaHoy = new Date().toLocaleString('es-CO', {
+      day: '2-digit', month: 'long', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+
+    const html = `
+      <div class="pdf-header">
+        <div class="pdf-header-left">
+          <div class="pdf-logo">🎫</div>
+          <div>
+            <h2>Mesa de Ayuda</h2>
+            <p>Reporte ejecutivo de tickets</p>
+          </div>
+        </div>
+        <div class="pdf-fecha">
+          Generado<br><b>${fechaHoy}</b>
+        </div>
+      </div>
+
+      <div class="pdf-section-title">Resumen ejecutivo</div>
+      <div class="pdf-kpis">
+        <div class="pdf-kpi">
+          <div class="pdf-kpi-label">Total</div>
+          <div class="pdf-kpi-value">${total}</div>
+        </div>
+        <div class="pdf-kpi">
+          <div class="pdf-kpi-label">Abiertos</div>
+          <div class="pdf-kpi-value">${abiertos}</div>
+        </div>
+        <div class="pdf-kpi">
+          <div class="pdf-kpi-label">En proceso</div>
+          <div class="pdf-kpi-value">${proceso}</div>
+        </div>
+        <div class="pdf-kpi">
+          <div class="pdf-kpi-label">Cerrados</div>
+          <div class="pdf-kpi-value">${cerrados}</div>
+        </div>
+        <div class="pdf-kpi danger">
+          <div class="pdf-kpi-label">Vencidos</div>
+          <div class="pdf-kpi-value">${vencidos}</div>
+        </div>
+      </div>
+
+      <div class="pdf-two-col">
+        <div class="pdf-box">
+          <h4>Distribución por prioridad</h4>
+          <div class="pdf-row"><span>🔴 Alta</span><b>${alta}</b></div>
+          <div class="pdf-row"><span>🟡 Media</span><b>${media}</b></div>
+          <div class="pdf-row"><span>🟢 Baja</span><b>${baja}</b></div>
+        </div>
+        <div class="pdf-box">
+          <h4>Indicadores clave</h4>
+          <div class="pdf-row"><span>Tasa de resolución</span><b>${pct}%</b></div>
+          <div class="pdf-row"><span>Tiempo prom. resolución</span><b>${tiempoProm}</b></div>
+          <div class="pdf-row"><span>Cumplimiento SLA</span><b>${total ? Math.round(((total - vencidos) / total) * 100) : 100}%</b></div>
+        </div>
+      </div>
+
+      <div class="pdf-section-title">Tickets recientes</div>
+      <table class="pdf-table">
+        <thead>
+          <tr>
+            <th>Título</th>
+            <th>Solicitante</th>
+            <th>Prioridad</th>
+            <th>Estado</th>
+            <th>Fecha</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${recientes.map(t => `
+            <tr>
+              <td>${escapeHtml(t.titulo)}</td>
+              <td>${escapeHtml(t.solicitante)}</td>
+              <td><span class="pdf-badge ${t.prioridad}">${t.prioridad.toUpperCase()}</span></td>
+              <td><span class="pdf-badge ${t.estado}">${t.estado.toUpperCase()}</span></td>
+              <td>${t.fecha}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+
+      ${vencidosList.length ? `
+        <div class="pdf-section-title" style="color: #ef4444;">⚠ Tickets vencidos (fuera de SLA)</div>
+        <table class="pdf-table">
+          <thead>
+            <tr>
+              <th>Título</th>
+              <th>Solicitante</th>
+              <th>Prioridad</th>
+              <th>SLA</th>
+              <th>Transcurrido</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${vencidosList.map(t => `
+              <tr>
+                <td>${escapeHtml(t.titulo)}</td>
+                <td>${escapeHtml(t.solicitante)}</td>
+                <td><span class="pdf-badge ${t.prioridad}">${t.prioridad.toUpperCase()}</span></td>
+                <td>${SLA[t.prioridad]}h</td>
+                <td style="color:#ef4444; font-weight:600;">${formatearDuracion(horasTranscurridas(t) * 3600000)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      ` : ''}
+
+      <div class="pdf-footer">
+        <span>Mesa de Ayuda · Reporte generado automáticamente</span>
+        <span>Página 1 de 1</span>
+      </div>
+    `;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'pdf-overlay activo';
+    overlay.innerHTML = `
+      <div class="pdf-preview">
+        <div id="pdfContent">
+          ${html}
+        </div>
+        <div class="pdf-actions">
+          <button class="pdf-btn pdf-btn-secondary" onclick="cerrarPDF()">Cancelar</button>
+          <button class="pdf-btn pdf-btn-primary" onclick="descargarPDF()">📥 Descargar PDF</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+  }
+
+  function cerrarPDF() {
+    const overlay = document.querySelector('.pdf-overlay');
+    if (overlay) overlay.remove();
+  }
+
+  async function descargarPDF() {
+    const contenido = document.getElementById('pdfContent');
+    if (!contenido) return;
+
+    const btn = document.querySelector('.pdf-btn-primary');
+    const textoOriginal = btn?.textContent;
+    if (btn) {
+      btn.textContent = '⏳ Generando...';
+      btn.disabled = true;
+    }
+
+    try {
+      const canvas = await html2canvas(contenido, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        useCORS: true,
+        logging: false
+      });
+
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({
+        unit: 'mm',
+        format: 'a4',
+        orientation: 'portrait'
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pdfWidth - 20;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 10;
+      const imgData = canvas.toDataURL('image/png');
+
+      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+      heightLeft -= (pdfHeight - 20);
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight + 10;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        heightLeft -= (pdfHeight - 20);
+      }
+
+      const fecha = new Date().toISOString().slice(0, 10);
+      pdf.save(`reporte_mesa_ayuda_${fecha}.pdf`);
+
+      cerrarPDF();
+    } catch (err) {
+      console.error(err);
+      alert('Hubo un error al generar el PDF. Intenta de nuevo.');
+      if (btn) {
+        btn.textContent = textoOriginal;
+        btn.disabled = false;
+      }
+    }
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') cerrarPDF();
+  });
+
   /* ============ INIT ============ */
   document.addEventListener('DOMContentLoaded', () => {
-    // Tema guardado
     if (localStorage.getItem('tema') === 'light') {
       document.body.classList.add('light');
       const btn = document.getElementById('btnTema');
       if (btn) btn.textContent = '☀️';
     }
 
-    // Estado del botón de notificaciones
     if ('Notification' in window && Notification.permission === 'granted') {
       const btn = document.getElementById('btnNotif');
       if (btn) btn.classList.add('activo');
