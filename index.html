@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mesa de Ayuda</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #08080c;
+    --bg-elev: #0f0f16;
+    --surface: rgba(255, 255, 255, 0.03);
+    --surface-hover: rgba(255, 255, 255, 0.06);
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.15);
+    --text: #f5f5f7;
+    --text-muted: #8a8a94;
+    --text-dim: #5a5a64;
+    --accent: #7c5cff;
+    --accent-2: #22d3ee;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --radius: 18px;
+    --radius-sm: 12px;
+    --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+
+  /* Fondo con glows suaves */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(circle at 15% 0%, rgba(124, 92, 255, 0.15), transparent 45%),
+      radial-gradient(circle at 85% 100%, rgba(34, 211, 238, 0.1), transparent 45%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* HEADER */
+  header {
+    margin-bottom: 40px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .logo {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: grid;
+    place-items: center;
+    font-size: 20px;
+    box-shadow: 0 8px 24px rgba(124, 92, 255, 0.35);
+  }
+
+  header h1 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  header p {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-bottom: 24px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    transition: var(--transition);
+  }
+
+  .card:hover { border-color: var(--border-strong); }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* FORM */
+  .form-grid {
+    display: grid;
+    gap: 14px;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  input, textarea, select {
+    width: 100%;
+    padding: 14px 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    transition: var(--transition);
+    outline: none;
+  }
+
+  input::placeholder, textarea::placeholder {
+    color: var(--text-dim);
+  }
+
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--accent);
+    background: rgba(124, 92, 255, 0.05);
+    box-shadow: 0 0 0 4px rgba(124, 92, 255, 0.12);
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 84px;
+  }
+
+  select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a8a94' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    padding-right: 40px;
+  }
+
+  select option {
+    background: var(--bg-elev);
+    color: var(--text);
+  }
+
+  /* BUTTONS */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 20px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #9d7cff);
+    color: white;
+    box-shadow: 0 8px 24px rgba(124, 92, 255, 0.3);
+    width: 100%;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 32px rgba(124, 92, 255, 0.45);
+  }
+
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-ghost {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text);
+    border-color: var(--border-strong);
+  }
+
+  /* FILTROS */
+  .filtros {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .chip {
+    padding: 8px 14px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    color: var(--text-muted);
+    font-size: 12.5px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+
+  .chip:hover {
+    color: var(--text);
+    border-color: var(--border-strong);
+  }
+
+  .chip.active {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+  }
+
+  /* TICKETS */
+  .tickets-list {
+    display: grid;
+    gap: 12px;
+  }
+
+  .ticket {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 18px 20px;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+    animation: slideIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .ticket:hover {
+    background: var(--surface-hover);
+    border-color: var(--border-strong);
+    transform: translateY(-1px);
+  }
+
+  /* Línea lateral de prioridad */
+  .ticket::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+  }
+  .ticket.alta::before { background: var(--danger); }
+  .ticket.media::before { background: var(--warning); }
+  .ticket.baja::before { background: var(--success); }
+
+  .ticket-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .ticket h3 {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .ticket p {
+    font-size: 13.5px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .badge::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 8px currentColor;
+  }
+
+  .badge.abierto { background: rgba(124, 92, 255, 0.12); color: #a58cff; }
+  .badge.proceso { background: rgba(245, 158, 11, 0.12); color: #fbbf24; }
+  .badge.cerrado { background: rgba(16, 185, 129, 0.12); color: #34d399; }
+
+  .ticket-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+  }
+
+  .ticket-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .ticket-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-dim);
+    font-size: 13.5px;
+  }
+
+  .empty-icon {
+    font-size: 32px;
+    margin-bottom: 10px;
+    opacity: 0.4;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 560px) {
+    .container { padding: 28px 16px 60px; }
+    .card { padding: 20px; }
+    .form-row { grid-template-columns: 1fr; }
+    header h1 { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="logo">🎫</div>
+    <div>
+      <h1>Mesa de Ayuda</h1>
+      <p>Gestiona tus tickets de soporte</p>
+    </div>
+  </header>
+
+  <!-- Nuevo ticket -->
+  <section class="card">
+    <div class="card-title">Nuevo ticket</div>
+    <div class="form-grid">
+      <input id="titulo" placeholder="Título del problema" autocomplete="off" />
+      <textarea id="descripcion" placeholder="Describe el problema con detalle..."></textarea>
+      <div class="form-row">
+        <input id="solicitante" placeholder="Solicitante" autocomplete="off" />
+        <select id="prioridad">
+          <option value="baja">🟢 Prioridad baja</option>
+          <option value="media" selected>🟡 Prioridad media</option>
+          <option value="alta">🔴 Prioridad alta</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="crearTicket()">
+        Crear ticket →
+      </button>
+    </div>
+  </section>
+
+  <!-- Lista -->
+  <section class="card">
+    <div class="card-title">Tickets</div>
+
+    <div class="filtros">
+      <button class="chip active" data-filtro="todos" onclick="filtrar('todos', this)">Todos</button>
+      <button class="chip" data-filtro="abierto" onclick="filtrar('abierto', this)">Abiertos</button>
+      <button class="chip" data-filtro="proceso" onclick="filtrar('proceso', this)">En proceso</button>
+      <button class="chip" data-filtro="cerrado" onclick="filtrar('cerrado', this)">Cerrados</button>
+    </div>
+
+    <div id="listaTickets" class="tickets-list"></div>
+  </section>
+</div>
+
+<script>
+  let tickets = JSON.parse(localStorage.getItem('tickets_v2')) || [];
+  let filtroActual = 'todos';
+
+  const guardar = () => localStorage.setItem('tickets_v2', JSON.stringify(tickets));
+
+  function crearTicket() {
+    const titulo = document.getElementById('titulo').value.trim();
+    const descripcion = document.getElementById('descripcion').value.trim();
+    const solicitante = document.getElementById('solicitante').value.trim();
+    const prioridad = document.getElementById('prioridad').value;
+
+    if (!titulo || !solicitante) {
+      alert('El título y el solicitante son obligatorios');
+      return;
+    }
+
+    tickets.unshift({
+      id: Date.now(),
+      titulo, descripcion, solicitante, prioridad,
+      estado: 'abierto',
+      fecha: new Date().toLocaleString('es-CO', {
+        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+      })
+    });
+
+    guardar();
+    render();
+
+    document.getElementById('titulo').value = '';
+    document.getElementById('descripcion').value = '';
+    document.getElementById('solicitante').value = '';
+    document.getElementById('prioridad').value = 'media';
+    document.getElementById('titulo').focus();
+  }
+
+  function cambiarEstado(id) {
+    const t = tickets.find(x => x.id === id);
+    if (!t) return;
+    t.estado = t.estado === 'abierto' ? 'proceso'
+             : t.estado === 'proceso' ? 'cerrado'
+             : 'abierto';
+    guardar();
+    render();
+  }
+
+  function eliminar(id) {
+    if (!confirm('¿Eliminar este ticket?')) return;
+    tickets = tickets.filter(x => x.id !== id);
+    guardar();
+    render();
+  }
+
+  function filtrar(filtro, btn) {
+    filtroActual = filtro;
+    document.querySelectorAll('.chip').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  }
+
+  function render() {
+    const lista = document.getElementById('listaTickets');
+    const visibles = filtroActual === 'todos'
+      ? tickets
+      : tickets.filter(t => t.estado === filtroActual);
+
+    if (visibles.length === 0) {
+      lista.innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">◇</div>
+          No hay tickets para mostrar
+        </div>`;
+      return;
+    }
+
+    lista.innerHTML = visibles.map(t => `
+      <article class="ticket ${t.prioridad}">
+        <div class="ticket-head">
+          <h3>${escapeHtml(t.titulo)}</h3>
+          <span class="badge ${t.estado}">${t.estado.toUpperCase()}</span>
+        </div>
+        ${t.descripcion ? `<p>${escapeHtml(t.descripcion)}</p>` : ''}
+        <div class="ticket-meta">
+          <span>👤 ${escapeHtml(t.solicitante)}</span>
+          <span>⚡ ${t.prioridad}</span>
+          <span>🕒 ${t.fecha}</span>
+        </div>
+        <div class="ticket-actions">
+          <button class="btn btn-ghost" onclick="cambiarEstado(${t.id})">Cambiar estado</button>
+          <button class="btn btn-ghost" onclick="eliminar(${t.id})">Eliminar</button>
+        </div>
+      </article>
+    `).join('');
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+
+  render();
+</script>
+</body>
+</html>
