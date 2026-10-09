@@ -39,7 +39,6 @@
     line-height: 1.5;
   }
 
-  /* Fondo con glows suaves */
   body::before {
     content: '';
     position: fixed;
@@ -61,7 +60,7 @@
 
   /* HEADER */
   header {
-    margin-bottom: 40px;
+    margin-bottom: 32px;
     display: flex;
     align-items: center;
     gap: 14px;
@@ -90,6 +89,88 @@
     font-weight: 400;
   }
 
+  .live-dot {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    padding: 6px 12px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: rgba(16, 185, 129, 0.06);
+  }
+  .live-dot span {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 10px var(--success);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* KPI GRID */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    position: relative;
+    overflow: hidden;
+    transition: var(--transition);
+  }
+
+  .kpi::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(124,92,255,0.6), transparent);
+    opacity: 0;
+    transition: var(--transition);
+  }
+
+  .kpi:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+  .kpi:hover::after { opacity: 1; }
+
+  .kpi-label {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+
+  .kpi-value {
+    font-size: 30px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    background: linear-gradient(135deg, var(--text), #b8b8c4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .kpi-sub {
+    font-size: 11.5px;
+    color: var(--text-dim);
+    margin-top: 8px;
+  }
+
   /* CARDS */
   .card {
     background: var(--surface);
@@ -116,11 +197,76 @@
     gap: 8px;
   }
 
-  /* FORM */
-  .form-grid {
-    display: grid;
-    gap: 14px;
+  /* STATS CARD */
+  .stats-card { padding: 24px 28px; }
+
+  .stats-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    gap: 20px;
+    flex-wrap: wrap;
   }
+
+  .stats-percent {
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .stats-meta {
+    display: flex;
+    gap: 16px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+    flex-wrap: wrap;
+  }
+  .stats-meta b { color: var(--text); font-weight: 600; }
+
+  .dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    margin-right: 5px;
+    vertical-align: middle;
+  }
+  .dot.high { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+  .dot.mid  { background: var(--warning); box-shadow: 0 0 8px var(--warning); }
+  .dot.low  { background: var(--success); box-shadow: 0 0 8px var(--success); }
+
+  .progress {
+    height: 8px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 100px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    border-radius: 100px;
+    width: 0%;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 20px rgba(124,92,255,0.5);
+  }
+
+  .stats-foot {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-size: 12.5px;
+    color: var(--text-muted);
+  }
+  .stats-foot b { color: var(--text); font-weight: 600; }
+
+  /* FORM */
+  .form-grid { display: grid; gap: 14px; }
 
   .form-row {
     display: grid;
@@ -141,9 +287,7 @@
     outline: none;
   }
 
-  input::placeholder, textarea::placeholder {
-    color: var(--text-dim);
-  }
+  input::placeholder, textarea::placeholder { color: var(--text-dim); }
 
   input:focus, textarea:focus, select:focus {
     border-color: var(--accent);
@@ -151,10 +295,7 @@
     box-shadow: 0 0 0 4px rgba(124, 92, 255, 0.12);
   }
 
-  textarea {
-    resize: vertical;
-    min-height: 84px;
-  }
+  textarea { resize: vertical; min-height: 84px; }
 
   select {
     cursor: pointer;
@@ -165,10 +306,7 @@
     padding-right: 40px;
   }
 
-  select option {
-    background: var(--bg-elev);
-    color: var(--text);
-  }
+  select option { background: var(--bg-elev); color: var(--text); }
 
   /* BUTTONS */
   .btn {
@@ -237,10 +375,7 @@
     transition: var(--transition);
   }
 
-  .chip:hover {
-    color: var(--text);
-    border-color: var(--border-strong);
-  }
+  .chip:hover { color: var(--text); border-color: var(--border-strong); }
 
   .chip.active {
     background: var(--text);
@@ -249,10 +384,7 @@
   }
 
   /* TICKETS */
-  .tickets-list {
-    display: grid;
-    gap: 12px;
-  }
+  .tickets-list { display: grid; gap: 12px; }
 
   .ticket {
     background: rgba(255, 255, 255, 0.02);
@@ -276,7 +408,6 @@
     transform: translateY(-1px);
   }
 
-  /* Línea lateral de prioridad */
   .ticket::before {
     content: '';
     position: absolute;
@@ -371,6 +502,10 @@
   }
 
   /* RESPONSIVE */
+  @media (max-width: 720px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
   @media (max-width: 560px) {
     .container { padding: 28px 16px 60px; }
     .card { padding: 20px; }
@@ -384,13 +519,65 @@
 <div class="container">
   <header>
     <div class="logo">🎫</div>
-    <div>
+    <div style="flex:1">
       <h1>Mesa de Ayuda</h1>
-      <p>Gestiona tus tickets de soporte</p>
+      <p>Panel de control y gestión de tickets</p>
+    </div>
+    <div class="live-dot" title="Datos en vivo">
+      <span></span> Live
     </div>
   </header>
 
-  <!-- Nuevo ticket -->
+  <!-- DASHBOARD KPIs -->
+  <section class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-label">Total tickets</div>
+      <div class="kpi-value" id="kpiTotal">0</div>
+      <div class="kpi-sub" id="kpiTotalSub">—</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Abiertos</div>
+      <div class="kpi-value" id="kpiAbiertos">0</div>
+      <div class="kpi-sub">pendientes de atención</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">En proceso</div>
+      <div class="kpi-value" id="kpiProceso">0</div>
+      <div class="kpi-sub">siendo atendidos</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Cerrados</div>
+      <div class="kpi-value" id="kpiCerrados">0</div>
+      <div class="kpi-sub">resueltos</div>
+    </div>
+  </section>
+
+  <!-- PANEL DE ESTADÍSTICAS -->
+  <section class="card stats-card">
+    <div class="stats-head">
+      <div>
+        <div class="card-title" style="margin-bottom:6px">Progreso de resolución</div>
+        <div class="stats-percent" id="pctResolucion">0%</div>
+      </div>
+      <div class="stats-meta">
+        <div><span class="dot high"></span> Alta: <b id="pAlta">0</b></div>
+        <div><span class="dot mid"></span> Media: <b id="pMedia">0</b></div>
+        <div><span class="dot low"></span> Baja: <b id="pBaja">0</b></div>
+      </div>
+    </div>
+
+    <div class="progress">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="stats-foot">
+      <span>⏱ Tiempo prom. resolución: <b id="tiempoProm">—</b></span>
+      <span>📅 Hoy: <b id="ticketsHoy">0</b></span>
+      <span>🔥 Alta prioridad abierta: <b id="altaCritica">0</b></span>
+    </div>
+  </section>
+
+  <!-- NUEVO TICKET -->
   <section class="card">
     <div class="card-title">Nuevo ticket</div>
     <div class="form-grid">
@@ -404,32 +591,28 @@
           <option value="alta">🔴 Prioridad alta</option>
         </select>
       </div>
-      <button class="btn btn-primary" onclick="crearTicket()">
-        Crear ticket →
-      </button>
+      <button class="btn btn-primary" onclick="crearTicket()">Crear ticket →</button>
     </div>
   </section>
 
-  <!-- Lista -->
+  <!-- LISTA DE TICKETS -->
   <section class="card">
     <div class="card-title">Tickets</div>
-
     <div class="filtros">
       <button class="chip active" data-filtro="todos" onclick="filtrar('todos', this)">Todos</button>
       <button class="chip" data-filtro="abierto" onclick="filtrar('abierto', this)">Abiertos</button>
       <button class="chip" data-filtro="proceso" onclick="filtrar('proceso', this)">En proceso</button>
       <button class="chip" data-filtro="cerrado" onclick="filtrar('cerrado', this)">Cerrados</button>
     </div>
-
     <div id="listaTickets" class="tickets-list"></div>
   </section>
 </div>
 
 <script>
-  let tickets = JSON.parse(localStorage.getItem('tickets_v2')) || [];
+  let tickets = JSON.parse(localStorage.getItem('tickets_v3')) || [];
   let filtroActual = 'todos';
 
-  const guardar = () => localStorage.setItem('tickets_v2', JSON.stringify(tickets));
+  const guardar = () => localStorage.setItem('tickets_v3', JSON.stringify(tickets));
 
   function crearTicket() {
     const titulo = document.getElementById('titulo').value.trim();
@@ -442,11 +625,14 @@
       return;
     }
 
+    const ahora = new Date();
     tickets.unshift({
       id: Date.now(),
       titulo, descripcion, solicitante, prioridad,
       estado: 'abierto',
-      fecha: new Date().toLocaleString('es-CO', {
+      fechaCreacion: ahora.toISOString(),
+      fechaCierre: null,
+      fecha: ahora.toLocaleString('es-CO', {
         day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
       })
     });
@@ -464,9 +650,16 @@
   function cambiarEstado(id) {
     const t = tickets.find(x => x.id === id);
     if (!t) return;
-    t.estado = t.estado === 'abierto' ? 'proceso'
-             : t.estado === 'proceso' ? 'cerrado'
-             : 'abierto';
+
+    if (t.estado === 'abierto') {
+      t.estado = 'proceso';
+    } else if (t.estado === 'proceso') {
+      t.estado = 'cerrado';
+      t.fechaCierre = new Date().toISOString();
+    } else {
+      t.estado = 'abierto';
+      t.fechaCierre = null;
+    }
     guardar();
     render();
   }
@@ -485,6 +678,55 @@
     render();
   }
 
+  function calcularKPIs() {
+    const total = tickets.length;
+    const abiertos = tickets.filter(t => t.estado === 'abierto').length;
+    const proceso = tickets.filter(t => t.estado === 'proceso').length;
+    const cerrados = tickets.filter(t => t.estado === 'cerrado').length;
+    const pct = total ? Math.round((cerrados / total) * 100) : 0;
+
+    const alta = tickets.filter(t => t.prioridad === 'alta').length;
+    const media = tickets.filter(t => t.prioridad === 'media').length;
+    const baja = tickets.filter(t => t.prioridad === 'baja').length;
+
+    const altaCritica = tickets.filter(t => t.prioridad === 'alta' && t.estado !== 'cerrado').length;
+
+    const cerradosConTiempo = tickets.filter(t => t.fechaCierre && t.fechaCreacion);
+    let tiempoProm = '—';
+    if (cerradosConTiempo.length) {
+      const sumaMs = cerradosConTiempo.reduce((acc, t) => {
+        return acc + (new Date(t.fechaCierre) - new Date(t.fechaCreacion));
+      }, 0);
+      tiempoProm = formatearDuracion(sumaMs / cerradosConTiempo.length);
+    }
+
+    const hoy = new Date().toDateString();
+    const ticketsHoy = tickets.filter(t => new Date(t.fechaCreacion).toDateString() === hoy).length;
+
+    document.getElementById('kpiTotal').textContent = total;
+    document.getElementById('kpiTotalSub').textContent = ticketsHoy + ' creados hoy';
+    document.getElementById('kpiAbiertos').textContent = abiertos;
+    document.getElementById('kpiProceso').textContent = proceso;
+    document.getElementById('kpiCerrados').textContent = cerrados;
+    document.getElementById('pctResolucion').textContent = pct + '%';
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('pAlta').textContent = alta;
+    document.getElementById('pMedia').textContent = media;
+    document.getElementById('pBaja').textContent = baja;
+    document.getElementById('tiempoProm').textContent = tiempoProm;
+    document.getElementById('ticketsHoy').textContent = ticketsHoy;
+    document.getElementById('altaCritica').textContent = altaCritica;
+  }
+
+  function formatearDuracion(ms) {
+    const min = Math.floor(ms / 60000);
+    if (min < 60) return min + ' min';
+    const h = Math.floor(min / 60);
+    if (h < 24) return h + 'h ' + (min % 60) + 'm';
+    const d = Math.floor(h / 24);
+    return d + 'd ' + (h % 24) + 'h';
+  }
+
   function render() {
     const lista = document.getElementById('listaTickets');
     const visibles = filtroActual === 'todos'
@@ -497,27 +739,28 @@
           <div class="empty-icon">◇</div>
           No hay tickets para mostrar
         </div>`;
-      return;
+    } else {
+      lista.innerHTML = visibles.map(t => `
+        <article class="ticket ${t.prioridad}">
+          <div class="ticket-head">
+            <h3>${escapeHtml(t.titulo)}</h3>
+            <span class="badge ${t.estado}">${t.estado.toUpperCase()}</span>
+          </div>
+          ${t.descripcion ? '<p>' + escapeHtml(t.descripcion) + '</p>' : ''}
+          <div class="ticket-meta">
+            <span>👤 ${escapeHtml(t.solicitante)}</span>
+            <span>⚡ ${t.prioridad}</span>
+            <span>🕒 ${t.fecha}</span>
+          </div>
+          <div class="ticket-actions">
+            <button class="btn btn-ghost" onclick="cambiarEstado(${t.id})">Cambiar estado</button>
+            <button class="btn btn-ghost" onclick="eliminar(${t.id})">Eliminar</button>
+          </div>
+        </article>
+      `).join('');
     }
 
-    lista.innerHTML = visibles.map(t => `
-      <article class="ticket ${t.prioridad}">
-        <div class="ticket-head">
-          <h3>${escapeHtml(t.titulo)}</h3>
-          <span class="badge ${t.estado}">${t.estado.toUpperCase()}</span>
-        </div>
-        ${t.descripcion ? `<p>${escapeHtml(t.descripcion)}</p>` : ''}
-        <div class="ticket-meta">
-          <span>👤 ${escapeHtml(t.solicitante)}</span>
-          <span>⚡ ${t.prioridad}</span>
-          <span>🕒 ${t.fecha}</span>
-        </div>
-        <div class="ticket-actions">
-          <button class="btn btn-ghost" onclick="cambiarEstado(${t.id})">Cambiar estado</button>
-          <button class="btn btn-ghost" onclick="eliminar(${t.id})">Eliminar</button>
-        </div>
-      </article>
-    `).join('');
+    calcularKPIs();
   }
 
   function escapeHtml(str) {
