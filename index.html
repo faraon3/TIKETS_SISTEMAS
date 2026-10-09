@@ -115,7 +115,7 @@
   /* KPI GRID */
   .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 12px;
     margin-bottom: 20px;
   }
@@ -169,6 +169,19 @@
     font-size: 11.5px;
     color: var(--text-dim);
     margin-top: 8px;
+  }
+
+  /* KPI de peligro (vencidos) */
+  .kpi-danger { border-color: rgba(239, 68, 68, 0.25); }
+  .kpi-danger .kpi-value {
+    background: linear-gradient(135deg, #ef4444, #f87171);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .kpi-danger::after {
+    background: linear-gradient(90deg, transparent, rgba(239,68,68,0.6), transparent) !important;
+    opacity: 1 !important;
   }
 
   /* CARDS */
@@ -383,6 +396,17 @@
     border-color: var(--text);
   }
 
+  /* TICKETS HEADER */
+  .tickets-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .tickets-header .card-title { margin-bottom: 0; }
+
   /* TICKETS */
   .tickets-list { display: grid; gap: 12px; }
 
@@ -417,6 +441,17 @@
   .ticket.alta::before { background: var(--danger); }
   .ticket.media::before { background: var(--warning); }
   .ticket.baja::before { background: var(--success); }
+
+  .ticket.vencido::before {
+    background: #ef4444 !important;
+    box-shadow: 0 0 12px #ef4444;
+    animation: pulse-danger 2s infinite;
+  }
+
+  @keyframes pulse-danger {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.55; }
+  }
 
   .ticket-head {
     display: flex;
@@ -467,6 +502,14 @@
   .badge.proceso { background: rgba(245, 158, 11, 0.12); color: #fbbf24; }
   .badge.cerrado { background: rgba(16, 185, 129, 0.12); color: #34d399; }
 
+  .badge-vencido {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    margin-left: 8px;
+    animation: pulse-danger 2s infinite;
+  }
+  .badge-vencido::before { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+
   .ticket-meta {
     display: flex;
     flex-wrap: wrap;
@@ -502,6 +545,10 @@
   }
 
   /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
   @media (max-width: 720px) {
     .kpi-grid { grid-template-columns: repeat(2, 1fr); }
   }
@@ -538,7 +585,7 @@
     <div class="kpi">
       <div class="kpi-label">Abiertos</div>
       <div class="kpi-value" id="kpiAbiertos">0</div>
-      <div class="kpi-sub">pendientes de atención</div>
+      <div class="kpi-sub">pendientes</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">En proceso</div>
@@ -549,6 +596,11 @@
       <div class="kpi-label">Cerrados</div>
       <div class="kpi-value" id="kpiCerrados">0</div>
       <div class="kpi-sub">resueltos</div>
+    </div>
+    <div class="kpi kpi-danger">
+      <div class="kpi-label">⚠ Vencidos (SLA)</div>
+      <div class="kpi-value" id="kpiVencidos">0</div>
+      <div class="kpi-sub">fuera de tiempo</div>
     </div>
   </section>
 
@@ -586,9 +638,9 @@
       <div class="form-row">
         <input id="solicitante" placeholder="Solicitante" autocomplete="off" />
         <select id="prioridad">
-          <option value="baja">🟢 Prioridad baja</option>
-          <option value="media" selected>🟡 Prioridad media</option>
-          <option value="alta">🔴 Prioridad alta</option>
+          <option value="baja">🟢 Prioridad baja (SLA 72h)</option>
+          <option value="media" selected>🟡 Prioridad media (SLA 24h)</option>
+          <option value="alta">🔴 Prioridad alta (SLA 4h)</option>
         </select>
       </div>
       <button class="btn btn-primary" onclick="crearTicket()">Crear ticket →</button>
@@ -597,13 +649,18 @@
 
   <!-- LISTA DE TICKETS -->
   <section class="card">
-    <div class="card-title">Tickets</div>
+    <div class="tickets-header">
+      <div class="card-title">Tickets</div>
+      <button class="btn btn-ghost" onclick="exportarCSV()">📥 Exportar CSV</button>
+    </div>
+
     <div class="filtros">
       <button class="chip active" data-filtro="todos" onclick="filtrar('todos', this)">Todos</button>
       <button class="chip" data-filtro="abierto" onclick="filtrar('abierto', this)">Abiertos</button>
       <button class="chip" data-filtro="proceso" onclick="filtrar('proceso', this)">En proceso</button>
       <button class="chip" data-filtro="cerrado" onclick="filtrar('cerrado', this)">Cerrados</button>
     </div>
+
     <div id="listaTickets" class="tickets-list"></div>
   </section>
 </div>
@@ -612,8 +669,14 @@
   let tickets = JSON.parse(localStorage.getItem('tickets_v3')) || [];
   let filtroActual = 'todos';
 
+  // SLA por prioridad (en horas)
+  const SLA = { alta: 4, media: 24, baja: 72 };
+  // Orden de prioridad para ordenar la lista
+  const ORDEN_PRIORIDAD = { alta: 1, media: 2, baja: 3 };
+
   const guardar = () => localStorage.setItem('tickets_v3', JSON.stringify(tickets));
 
+  /* ============ CREAR ============ */
   function crearTicket() {
     const titulo = document.getElementById('titulo').value.trim();
     const descripcion = document.getElementById('descripcion').value.trim();
@@ -647,6 +710,7 @@
     document.getElementById('titulo').focus();
   }
 
+  /* ============ CAMBIAR ESTADO ============ */
   function cambiarEstado(id) {
     const t = tickets.find(x => x.id === id);
     if (!t) return;
@@ -664,6 +728,7 @@
     render();
   }
 
+  /* ============ ELIMINAR ============ */
   function eliminar(id) {
     if (!confirm('¿Eliminar este ticket?')) return;
     tickets = tickets.filter(x => x.id !== id);
@@ -671,6 +736,7 @@
     render();
   }
 
+  /* ============ FILTRAR ============ */
   function filtrar(filtro, btn) {
     filtroActual = filtro;
     document.querySelectorAll('.chip').forEach(b => b.classList.remove('active'));
@@ -678,17 +744,29 @@
     render();
   }
 
+  /* ============ SLA ============ */
+  function horasTranscurridas(t) {
+    const fin = t.fechaCierre ? new Date(t.fechaCierre) : new Date();
+    return (fin - new Date(t.fechaCreacion)) / 3600000;
+  }
+
+  function estaVencido(t) {
+    if (t.estado === 'cerrado') return false;
+    return horasTranscurridas(t) > SLA[t.prioridad];
+  }
+
+  /* ============ KPIs ============ */
   function calcularKPIs() {
     const total = tickets.length;
     const abiertos = tickets.filter(t => t.estado === 'abierto').length;
     const proceso = tickets.filter(t => t.estado === 'proceso').length;
     const cerrados = tickets.filter(t => t.estado === 'cerrado').length;
+    const vencidos = tickets.filter(estaVencido).length;
     const pct = total ? Math.round((cerrados / total) * 100) : 0;
 
     const alta = tickets.filter(t => t.prioridad === 'alta').length;
     const media = tickets.filter(t => t.prioridad === 'media').length;
     const baja = tickets.filter(t => t.prioridad === 'baja').length;
-
     const altaCritica = tickets.filter(t => t.prioridad === 'alta' && t.estado !== 'cerrado').length;
 
     const cerradosConTiempo = tickets.filter(t => t.fechaCierre && t.fechaCreacion);
@@ -708,6 +786,7 @@
     document.getElementById('kpiAbiertos').textContent = abiertos;
     document.getElementById('kpiProceso').textContent = proceso;
     document.getElementById('kpiCerrados').textContent = cerrados;
+    document.getElementById('kpiVencidos').textContent = vencidos;
     document.getElementById('pctResolucion').textContent = pct + '%';
     document.getElementById('progressBar').style.width = pct + '%';
     document.getElementById('pAlta').textContent = alta;
@@ -727,11 +806,19 @@
     return d + 'd ' + (h % 24) + 'h';
   }
 
+  /* ============ RENDER ============ */
   function render() {
     const lista = document.getElementById('listaTickets');
-    const visibles = filtroActual === 'todos'
-      ? tickets
+    let visibles = filtroActual === 'todos'
+      ? [...tickets]
       : tickets.filter(t => t.estado === filtroActual);
+
+    // Ordenar: primero por prioridad (alta, media, baja), luego por fecha (más reciente arriba)
+    visibles.sort((a, b) => {
+      const p = ORDEN_PRIORIDAD[a.prioridad] - ORDEN_PRIORIDAD[b.prioridad];
+      if (p !== 0) return p;
+      return new Date(b.fechaCreacion) - new Date(a.fechaCreacion);
+    });
 
     if (visibles.length === 0) {
       lista.innerHTML = `
@@ -740,27 +827,71 @@
           No hay tickets para mostrar
         </div>`;
     } else {
-      lista.innerHTML = visibles.map(t => `
-        <article class="ticket ${t.prioridad}">
+      lista.innerHTML = visibles.map(t => {
+        const vencido = estaVencido(t);
+        return `
+        <article class="ticket ${t.prioridad} ${vencido ? 'vencido' : ''}">
           <div class="ticket-head">
             <h3>${escapeHtml(t.titulo)}</h3>
-            <span class="badge ${t.estado}">${t.estado.toUpperCase()}</span>
+            <span>
+              ${vencido ? '<span class="badge badge-vencido">⚠ VENCIDO</span>' : ''}
+              <span class="badge ${t.estado}">${t.estado.toUpperCase()}</span>
+            </span>
           </div>
           ${t.descripcion ? '<p>' + escapeHtml(t.descripcion) + '</p>' : ''}
           <div class="ticket-meta">
             <span>👤 ${escapeHtml(t.solicitante)}</span>
-            <span>⚡ ${t.prioridad}</span>
+            <span>⚡ ${t.prioridad} · SLA ${SLA[t.prioridad]}h</span>
             <span>🕒 ${t.fecha}</span>
           </div>
           <div class="ticket-actions">
             <button class="btn btn-ghost" onclick="cambiarEstado(${t.id})">Cambiar estado</button>
             <button class="btn btn-ghost" onclick="eliminar(${t.id})">Eliminar</button>
           </div>
-        </article>
-      `).join('');
+        </article>`;
+      }).join('');
     }
 
     calcularKPIs();
+  }
+
+  /* ============ EXPORTAR CSV ============ */
+  function exportarCSV() {
+    if (tickets.length === 0) {
+      alert('No hay tickets para exportar');
+      return;
+    }
+
+    const encabezados = ['ID', 'Título', 'Descripción', 'Solicitante', 'Prioridad', 'Estado', 'Fecha creación', 'Fecha cierre', 'Vencido'];
+
+    const filas = tickets.map(t => [
+      t.id,
+      t.titulo,
+      t.descripcion || '',
+      t.solicitante,
+      t.prioridad,
+      t.estado,
+      new Date(t.fechaCreacion).toLocaleString('es-CO'),
+      t.fechaCierre ? new Date(t.fechaCierre).toLocaleString('es-CO') : '',
+      estaVencido(t) ? 'SÍ' : 'NO'
+    ]);
+
+    const escapar = (v) => `"${String(v).replace(/"/g, '""')}"`;
+    const csv = [encabezados, ...filas]
+      .map(fila => fila.map(escapar).join(','))
+      .join('\n');
+
+    // BOM para que Excel respete tildes y ñ
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const fecha = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `tickets_${fecha}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
   function escapeHtml(str) {
@@ -770,6 +901,11 @@
   }
 
   render();
+
+  // Recalcular vencidos cada minuto (para que el semáforo se actualice solo)
+  setInterval(() => {
+    if (tickets.some(estaVencido)) render();
+  }, 60000);
 </script>
 </body>
 </html>
