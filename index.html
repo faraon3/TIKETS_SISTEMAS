@@ -6,8 +6,8 @@
 <title>Mesa de Ayuda</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#7c5cff">
-<meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Mesa de Ayuda">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -197,6 +197,20 @@
     flex-shrink: 0;
   }
   .usuario-logueado b { color: var(--text); font-weight: 500; }
+
+  .rol-badge {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 100px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-left: 4px;
+  }
+  .rol-badge.admin { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+  .rol-badge.agente { background: rgba(124, 92, 255, 0.15); color: #a58cff; }
+  .rol-badge.solicitante { background: rgba(16, 185, 129, 0.15); color: #34d399; }
 
   .btn-icon {
     width: 36px; height: 36px;
@@ -1127,6 +1141,16 @@
   .pdf-btn-secondary { background: #f0f0f5; color: #4a4a54; }
   .pdf-btn-secondary:hover { background: #e5e5ec; }
 
+  /* ============ CONTROL DE VISIBILIDAD POR ROL ============ */
+  .solo-admin,
+  .solo-admin-agente { display: none; }
+
+  body[data-rol="admin"] .solo-admin { display: revert; }
+  body[data-rol="admin"] .solo-admin-agente { display: revert; }
+  body[data-rol="agente"] .solo-admin-agente { display: revert; }
+
+  body[data-rol="solicitante"] .ocultar-solicitante { display: none !important; }
+
   @media (max-width: 900px) {
     .kpi-grid { grid-template-columns: repeat(3, 1fr); }
     .pdf-kpis { grid-template-columns: repeat(3, 1fr); }
@@ -1275,21 +1299,23 @@
 <div class="app-container" id="appContainer">
 <div class="container">
   <header>
-    <div class="logo">🎫</div>
+    <div class="logo" id="logoHeader">🎫</div>
     <div style="flex:1">
-      <h1>Mesa de Ayuda</h1>
-      <p>Panel de control y gestión de tickets</p>
+      <h1 id="tituloHeader">Mesa de Ayuda</h1>
+      <p id="subtituloHeader">Panel de control y gestión de tickets</p>
     </div>
     <div class="usuario-logueado" id="usuarioLogueado">
       <span>👤</span> <b id="nombreUsuario">—</b>
+      <span class="rol-badge" id="rolBadge" style="display:none;"></span>
     </div>
     <button class="btn-icon" id="btnNotif" title="Activar notificaciones" onclick="activarNotificaciones()">🔔</button>
     <button class="btn-icon" id="btnTema" title="Cambiar tema" onclick="toggleTema()">🌙</button>
-    <button class="btn-icon" id="btnPDF" title="Generar reporte PDF" onclick="generarReportePDF()">📄</button>
+    <button class="btn-icon solo-admin-agente" id="btnPDF" title="Generar reporte PDF" onclick="generarReportePDF()">📄</button>
     <button class="btn-icon" id="btnSalir" title="Cerrar sesión" onclick="cerrarSesion()">🚪</button>
   </header>
 
-  <section class="kpi-grid">
+  <!-- KPIs (solo admin y agente) -->
+  <section class="kpi-grid solo-admin-agente">
     <div class="kpi">
       <div class="kpi-label">Total tickets</div>
       <div class="kpi-value" id="kpiTotal">0</div>
@@ -1317,7 +1343,8 @@
     </div>
   </section>
 
-  <section class="card stats-card">
+  <!-- Stats (solo admin y agente) -->
+  <section class="card stats-card solo-admin-agente">
     <div class="stats-head">
       <div>
         <div class="card-title" style="margin-bottom:6px">Progreso de resolución</div>
@@ -1336,11 +1363,12 @@
       <span>⏱ Tiempo prom. resolución: <b id="tiempoProm">—</b></span>
       <span>📅 Hoy: <b id="ticketsHoy">0</b></span>
       <span>🔥 Alta prioridad abierta: <b id="altaCritica">0</b></span>
-      <span>👥 Usuarios: <b id="totalUsuarios">0</b></span>
+      <span class="solo-admin">👥 Usuarios: <b id="totalUsuarios">0</b></span>
     </div>
   </section>
 
-  <section class="charts-grid">
+  <!-- Gráficos (solo admin y agente) -->
+  <section class="charts-grid solo-admin-agente">
     <div class="card chart-card">
       <div class="card-title">📈 Tickets últimos 7 días</div>
       <div class="chart-wrap"><canvas id="chartTendencia"></canvas></div>
@@ -1351,10 +1379,11 @@
     </div>
   </section>
 
+  <!-- Nuevo ticket -->
   <section class="card">
-    <div class="card-title">Nuevo ticket</div>
+    <div class="card-title">➕ Nuevo ticket</div>
     <div class="form-grid">
-      <div>
+      <div id="contenedorSolicitante">
         <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.05em;">Solicitante *</label>
         <div class="autocomplete-wrap">
           <input id="buscadorUsuario" placeholder="🔍 Buscar por nombre o correo..." autocomplete="off" oninput="buscarUsuario()" onfocus="buscarUsuario()" />
@@ -1372,18 +1401,19 @@
           <option value="media" selected>🟡 Prioridad media (SLA 24h)</option>
           <option value="alta">🔴 Prioridad alta (SLA 4h)</option>
         </select>
-        <button class="btn btn-ghost" style="width:100%; padding:14px;" onclick="abrirModalUsuarioNuevo()">➕ Nuevo usuario</button>
+        <button class="btn btn-ghost solo-admin" style="width:100%; padding:14px;" onclick="abrirModalUsuarioNuevo()">➕ Nuevo usuario</button>
       </div>
 
       <button class="btn btn-primary" onclick="crearTicket()">Crear ticket →</button>
     </div>
   </section>
 
+  <!-- Lista de tickets -->
   <section class="card">
     <div class="section-header">
-      <div class="card-title">Tickets</div>
+      <div class="card-title" id="tituloListaTickets">🎫 Tickets</div>
       <div class="section-actions">
-        <button class="btn btn-ghost" onclick="exportarCSV()">📥 Exportar CSV</button>
+        <button class="btn btn-ghost solo-admin-agente" onclick="exportarCSV()">📥 Exportar CSV</button>
       </div>
     </div>
     <div class="search-wrap">
@@ -1392,7 +1422,6 @@
     </div>
     <div class="filtros">
       <button class="chip active" data-filtro="todos" onclick="filtrar('todos', this)">Todos</button>
-      <button class="chip" data-filtro="mios" onclick="filtrar('mios', this)">🎯 Mis tickets</button>
       <button class="chip" data-filtro="abierto" onclick="filtrar('abierto', this)">Abiertos</button>
       <button class="chip" data-filtro="proceso" onclick="filtrar('proceso', this)">En proceso</button>
       <button class="chip" data-filtro="cerrado" onclick="filtrar('cerrado', this)">Cerrados</button>
@@ -1402,7 +1431,8 @@
     </div>
   </section>
 
-  <section class="card">
+  <!-- Directorio (solo admin) -->
+  <section class="card solo-admin">
     <div class="section-header">
       <div class="card-title">👥 Directorio de usuarios</div>
       <div class="section-actions">
@@ -1503,9 +1533,35 @@
 
     perfilActual = perfil;
 
+    const rol = perfil?.rol || 'solicitante';
+    document.body.setAttribute('data-rol', rol);
+
+    // Header dinámico según rol
+    const rolesTexto = {
+      admin: { icono: '🎩', titulo: 'Panel de administración', sub: 'Control total de la mesa de ayuda' },
+      agente: { icono: '🛠️', titulo: 'Mesa de soporte', sub: 'Atiende y gestiona tickets' },
+      solicitante: { icono: '👤', titulo: 'Mis tickets', sub: 'Reporta y sigue tus solicitudes' }
+    };
+    const info = rolesTexto[rol] || rolesTexto.solicitante;
+    document.getElementById('logoHeader').textContent = info.icono;
+    document.getElementById('tituloHeader').textContent = info.titulo;
+    document.getElementById('subtituloHeader').textContent = info.sub;
+
     document.getElementById('nombreUsuario').textContent = 
       perfil?.nombre || usuarioActual.email;
-    
+
+    // Badge de rol
+    const badge = document.getElementById('rolBadge');
+    badge.textContent = rol;
+    badge.className = 'rol-badge ' + rol;
+    badge.style.display = 'inline-block';
+
+    // Título dinámico de la lista
+    if (rol === 'solicitante') {
+      document.getElementById('tituloListaTickets').textContent = '🎫 Mis tickets';
+      document.getElementById('contenedorSolicitante').style.display = 'none';
+    }
+
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('appContainer').classList.add('activo');
 
@@ -1551,6 +1607,12 @@
   }
 
   async function cargarUsuarios() {
+    // Admin carga directorio. Agente y solicitante no.
+    if (perfilActual?.rol !== 'admin') {
+      usuarios = [];
+      return;
+    }
+
     const { data, error } = await sb
       .from('usuarios')
       .select('*')
@@ -1562,7 +1624,8 @@
     }
     usuarios = data || [];
     renderUsuarios();
-    document.getElementById('totalUsuarios').textContent = usuarios.length;
+    const el = document.getElementById('totalUsuarios');
+    if (el) el.textContent = usuarios.length;
   }
 
   /* AUTOCOMPLETE USUARIOS */
@@ -1585,7 +1648,7 @@
         <div class="autocomplete-empty">
           No se encontraron usuarios.
           <br><br>
-          <button class="btn btn-ghost" onclick="abrirModalUsuarioNuevo()" style="width:auto;">➕ Crear usuario nuevo</button>
+          <button class="btn btn-ghost solo-admin" onclick="abrirModalUsuarioNuevo()" style="width:auto;">➕ Crear usuario nuevo</button>
         </div>`;
       list.classList.add('activo');
       return;
@@ -1643,7 +1706,26 @@
     const descripcion = document.getElementById('descripcion').value.trim();
     const prioridad = document.getElementById('prioridad').value;
 
-    if (!usuarioSeleccionado) { alert('Debes seleccionar un solicitante'); document.getElementById('buscadorUsuario').focus(); return; }
+    let solicitanteNombre, solicitanteId;
+
+    if (perfilActual?.rol === 'solicitante') {
+      // El solicitante se autoasigna
+      solicitanteNombre = perfilActual.nombre;
+      solicitanteId = perfilActual.usuario_id;
+      if (!solicitanteId) {
+        alert('Tu perfil no está vinculado a un usuario del directorio. Contacta al admin.');
+        return;
+      }
+    } else {
+      if (!usuarioSeleccionado) { 
+        alert('Debes seleccionar un solicitante'); 
+        document.getElementById('buscadorUsuario').focus(); 
+        return; 
+      }
+      solicitanteNombre = usuarioSeleccionado.nombre;
+      solicitanteId = usuarioSeleccionado.id;
+    }
+
     if (!titulo) { alert('El título es obligatorio'); document.getElementById('titulo').focus(); return; }
 
     const ahora = new Date().toISOString();
@@ -1657,8 +1739,9 @@
 
     const { error } = await sb.from('tickets').insert({
       titulo, descripcion,
-      solicitante: usuarioSeleccionado.nombre,
-      usuario_id: usuarioSeleccionado.id,
+      solicitante: solicitanteNombre,
+      solicitante_id: solicitanteId,
+      usuario_id: solicitanteId,
       prioridad, estado: 'abierto',
       fecha_creacion: ahora,
       historial: historialInicial
@@ -1666,11 +1749,10 @@
 
     if (error) { console.error(error); alert('Error al crear: ' + error.message); return; }
 
-    const solicitanteNombre = usuarioSeleccionado.nombre;
     document.getElementById('titulo').value = '';
     document.getElementById('descripcion').value = '';
     document.getElementById('prioridad').value = 'media';
-    limpiarUsuarioSeleccionado();
+    if (perfilActual?.rol !== 'solicitante') limpiarUsuarioSeleccionado();
 
     if (prioridad === 'alta') {
       notificarAltaPrioridad({ titulo, solicitante: solicitanteNombre });
@@ -1680,6 +1762,10 @@
   }
 
   async function cambiarEstado(id) {
+    if (perfilActual?.rol === 'solicitante') {
+      alert('Solo los agentes pueden cambiar el estado');
+      return;
+    }
     const t = tickets.find(x => x.id === id);
     if (!t) return;
     const ahora = new Date().toISOString();
@@ -1708,6 +1794,10 @@
   }
 
   async function eliminar(id) {
+    if (perfilActual?.rol !== 'admin') {
+      alert('Solo los administradores pueden eliminar tickets');
+      return;
+    }
     if (!confirm('¿Eliminar este ticket?')) return;
     const { error } = await sb.from('tickets').delete().eq('id', id);
     if (error) { console.error(error); alert('Error al eliminar'); return; }
@@ -1747,20 +1837,22 @@
     const ticketsHoy = tickets.filter(t =>
       new Date(t.fecha_creacion).toDateString() === hoy).length;
 
-    document.getElementById('kpiTotal').textContent = total;
-    document.getElementById('kpiTotalSub').textContent = ticketsHoy + ' creados hoy';
-    document.getElementById('kpiAbiertos').textContent = abiertos;
-    document.getElementById('kpiProceso').textContent = proceso;
-    document.getElementById('kpiCerrados').textContent = cerrados;
-    document.getElementById('kpiVencidos').textContent = vencidos;
-    document.getElementById('pctResolucion').textContent = pct + '%';
-    document.getElementById('progressBar').style.width = pct + '%';
-    document.getElementById('pAlta').textContent = alta;
-    document.getElementById('pMedia').textContent = media;
-    document.getElementById('pBaja').textContent = baja;
-    document.getElementById('tiempoProm').textContent = tiempoProm;
-    document.getElementById('ticketsHoy').textContent = ticketsHoy;
-    document.getElementById('altaCritica').textContent = altaCritica;
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    set('kpiTotal', total);
+    set('kpiTotalSub', ticketsHoy + ' creados hoy');
+    set('kpiAbiertos', abiertos);
+    set('kpiProceso', proceso);
+    set('kpiCerrados', cerrados);
+    set('kpiVencidos', vencidos);
+    set('pctResolucion', pct + '%');
+    const pb = document.getElementById('progressBar');
+    if (pb) pb.style.width = pct + '%';
+    set('pAlta', alta);
+    set('pMedia', media);
+    set('pBaja', baja);
+    set('tiempoProm', tiempoProm);
+    set('ticketsHoy', ticketsHoy);
+    set('altaCritica', altaCritica);
   }
 
   /* RENDER */
@@ -1770,11 +1862,12 @@
 
     let visibles = [...tickets];
 
-    if (filtroActual === 'mios') {
-      visibles = visibles.filter(t => 
-        perfilActual && t.solicitante === perfilActual.nombre
-      );
-    } else if (filtroActual !== 'todos') {
+    // Si es solicitante, solo ve sus propios tickets
+    if (perfilActual?.rol === 'solicitante') {
+      visibles = visibles.filter(t => t.solicitante_id === perfilActual.usuario_id);
+    }
+
+    if (filtroActual !== 'todos') {
       visibles = visibles.filter(t => t.estado === filtroActual);
     }
 
@@ -1793,16 +1886,20 @@
     });
 
     if (visibles.length === 0) {
+      const msg = perfilActual?.rol === 'solicitante' 
+        ? 'No has creado tickets aún' 
+        : 'No hay tickets para mostrar';
       lista.innerHTML = `
         <div class="empty">
           <div class="empty-icon">◇</div>
-          ${query ? 'No hay resultados para "' + escapeHtml(query) + '"' : 
-            filtroActual === 'mios' ? 'No has creado tickets aún' : 'No hay tickets para mostrar'}
+          ${query ? 'No hay resultados para "' + escapeHtml(query) + '"' : msg}
         </div>`;
     } else {
       lista.innerHTML = visibles.map(t => {
         const vencido = estaVencido(t);
         const numActividad = (t.historial || []).length;
+        const puedeCambiar = perfilActual?.rol !== 'solicitante';
+        const puedeEliminar = perfilActual?.rol === 'admin';
         return `
         <article class="ticket ${t.prioridad} ${vencido ? 'vencido' : ''}" onclick="abrirTicket(${t.id})">
           <div class="ticket-head">
@@ -1817,22 +1914,23 @@
             <span>👤 ${escapeHtml(t.solicitante)}</span>
             <span>⚡ ${t.prioridad} · SLA ${SLA[t.prioridad]}h</span>
             <span>🕒 ${formatearFecha(t.fecha_creacion)}</span>
-            ${numActividad > 0 ? `<span>💬 ${numActividad} actividad${numActividad !== 1 ? 'es' : ''}</span>` : ''}
+            ${numActividad > 0 ? `<span>💬 ${numActividad}</span>` : ''}
           </div>
           <div class="ticket-actions">
-            <button class="btn btn-ghost" onclick="event.stopPropagation(); cambiarEstado(${t.id})">Cambiar estado</button>
-            <button class="btn btn-ghost" onclick="event.stopPropagation(); eliminar(${t.id})">Eliminar</button>
+            ${puedeCambiar ? `<button class="btn btn-ghost" onclick="event.stopPropagation(); cambiarEstado(${t.id})">Cambiar estado</button>` : ''}
+            ${puedeEliminar ? `<button class="btn btn-ghost" onclick="event.stopPropagation(); eliminar(${t.id})">Eliminar</button>` : ''}
           </div>
         </article>`;
       }).join('');
     }
 
     calcularKPIs();
-    actualizarGraficos();
+    if (perfilActual?.rol !== 'solicitante') actualizarGraficos();
   }
 
   function renderUsuarios() {
     const lista = document.getElementById('listaUsuarios');
+    if (!lista) return;
     const query = (document.getElementById('buscadorUsuarios')?.value || '').toLowerCase().trim();
 
     let visibles = [...usuarios];
@@ -1914,9 +2012,9 @@
           <div>
             <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.05em;">Rol</label>
             <select id="uRol">
-              <option value="agente" selected>Agente (atiende tickets)</option>
-              <option value="admin">Administrador (todo)</option>
-              <option value="solicitante">Solicitante (solo sus tickets)</option>
+              <option value="agente" selected>🛠️ Agente (atiende tickets)</option>
+              <option value="admin">🎩 Administrador (todo)</option>
+              <option value="solicitante">👤 Solicitante (solo sus tickets)</option>
             </select>
           </div>
           ` : ''}
@@ -1948,131 +2046,85 @@
     document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
   }
 
-  
-async function guardarUsuario(id) {
-  const nombre = document.getElementById('uNombre').value.trim();
-  const correo = document.getElementById('uCorreo').value.trim().toLowerCase();
-  const telefono = document.getElementById('uTelefono').value.trim();
-  const cargo = document.getElementById('uCargo').value.trim();
-  const area = document.getElementById('uArea').value.trim();
+  async function guardarUsuario(id) {
+    const nombre = document.getElementById('uNombre').value.trim();
+    const correo = document.getElementById('uCorreo').value.trim().toLowerCase();
+    const telefono = document.getElementById('uTelefono').value.trim();
+    const cargo = document.getElementById('uCargo').value.trim();
+    const area = document.getElementById('uArea').value.trim();
 
-  if (!nombre) {
-    alert('El nombre es obligatorio');
-    return;
-  }
+    if (!nombre) { alert('El nombre es obligatorio'); return; }
+    if (!correo) { alert('El correo es obligatorio'); return; }
 
-  if (!correo) {
-    alert('El correo es obligatorio');
-    return;
-  }
+    if (id) {
+      const { error } = await sb.from('usuarios').update({
+        nombre, telefono: telefono || null, cargo: cargo || null, area: area || null
+      }).eq('id', id);
 
-  // Editar usuario existente
-  if (id) {
-    const { error } = await sb
-      .from('usuarios')
-      .update({
-        nombre,
-        telefono: telefono || null,
-        cargo: cargo || null,
-        area: area || null
-      })
-      .eq('id', id);
-
-    if (error) {
-      console.error('Error actualizando usuario:', error);
-      alert('Error al guardar: ' + error.message);
+      if (error) { console.error(error); alert('Error al guardar: ' + error.message); return; }
+      cerrarModalUsuario();
+      await cargarUsuarios();
       return;
     }
 
-    cerrarModalUsuario();
-    await cargarUsuarios();
-    return;
-  }
+    const password = document.getElementById('uPassword').value;
+    const rol = document.getElementById('uRol').value;
 
-  // Crear usuario nuevo
-  const password = document.getElementById('uPassword').value;
-  const rol = document.getElementById('uRol').value;
+    if (!password || password.length < 6) {
+      alert('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
 
-  if (!password || password.length < 6) {
-    alert('La contraseña debe tener al menos 6 caracteres');
-    return;
-  }
+    const btn = document.querySelector('.modal-overlay .btn-primary');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Creando cuenta...'; }
 
-  const btn = document.querySelector('.modal-overlay .btn-primary');
+    try {
+      const { data, error } = await sb.functions.invoke('crear-usuario', {
+        body: { email: correo, password, nombre, rol, telefono, cargo, area }
+      });
 
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = 'Creando cuenta...';
-  }
-
-  try {
-    const { data, error } = await sb.functions.invoke('crear-usuario', {
-      body: {
-        email: correo,
-        password,
-        nombre,
-        rol,
-        telefono,
-        cargo,
-        area
-      }
-    });
-
-    if (error) {
-      let detalle = error.message;
-
-      if (error.context) {
-        try {
-          const respuesta = await error.context.clone().json();
-          detalle = respuesta.detalle || respuesta.error || detalle;
-        } catch (_) {}
+      if (error) {
+        let detalle = error.message;
+        if (error.context) {
+          try {
+            const respuesta = await error.context.clone().json();
+            detalle = respuesta.detalle || respuesta.error || detalle;
+          } catch (_) {}
+        }
+        console.error('Error creando usuario:', error, data);
+        alert('Error al crear usuario: ' + detalle);
+        return;
       }
 
-      console.error('Error creando usuario:', error, data);
-      alert('Error al crear usuario: ' + detalle);
-      return;
-    }
+      if (!data || data.success !== true) {
+        console.error('Respuesta inesperada:', data);
+        alert('No se confirmó la creación: ' + (data?.detalle || data?.error || 'Respuesta inesperada'));
+        return;
+      }
 
-    if (!data || data.success !== true) {
-      console.error('Respuesta inesperada:', data);
-      alert(
-        'No se confirmó la creación del usuario: ' +
-        (data?.detalle || data?.error || 'Respuesta inesperada')
-      );
-      return;
-    }
+      cerrarModalUsuario();
+      await Promise.all([cargarUsuarios(), cargarTickets()]);
 
-    cerrarModalUsuario();
-
-    await Promise.all([
-      cargarUsuarios(),
-      cargarTickets()
-    ]);
-
-    // No asumir que la lista local ya contiene al usuario nuevo.
-    const nuevo = usuarios.find(
-      x => x.correo?.toLowerCase() === correo
-    );
-
-    if (nuevo && usuarioSeleccionado === null) {
-      seleccionarUsuario(nuevo.id);
-    }
-
-    alert('Usuario creado correctamente');
-
-  } catch (e) {
-    console.error('Error inesperado al crear usuario:', e);
-    alert('Ocurrió un error inesperado: ' + e.message);
-
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = 'Crear usuario y cuenta';
+      if (usuarioSeleccionado === null && perfilActual?.rol !== 'solicitante') {
+        const nuevo = usuarios.find(x => x.correo?.toLowerCase() === correo);
+        if (nuevo) seleccionarUsuario(nuevo.id);
+      }
+    } catch (e) {
+      console.error('Error inesperado:', e);
+      alert('Ocurrió un error inesperado: ' + e.message);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Crear usuario y cuenta';
+      }
     }
   }
-}
 
   async function eliminarUsuario(id) {
+    if (perfilActual?.rol !== 'admin') {
+      alert('Solo los administradores pueden eliminar usuarios');
+      return;
+    }
     const u = usuarios.find(x => x.id === id);
     if (!u) return;
     const ticketsDelUsuario = tickets.filter(t => t.usuario_id === id).length;
@@ -2091,6 +2143,9 @@ async function guardarUsuario(id) {
     const vencido = estaVencido(t);
     const historial = Array.isArray(t.historial) ? t.historial.slice().reverse() : [];
     const u = t.usuario_id ? usuarios.find(x => x.id === t.usuario_id) : null;
+
+    const puedeCambiar = perfilActual?.rol !== 'solicitante';
+    const puedeEliminar = perfilActual?.rol === 'admin';
 
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay activo';
@@ -2130,8 +2185,8 @@ async function guardarUsuario(id) {
         </div>
         ${t.descripcion ? `<div style="background: rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px 16px; font-size:13.5px; color:var(--text-muted); line-height:1.6; margin-bottom:20px; word-break:break-word;">${escapeHtml(t.descripcion)}</div>` : ''}
         <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px;">
-          <button class="btn btn-ghost" onclick="cambiarEstado(${t.id}).then(() => { cerrarTicketModal(); abrirTicket(${t.id}); })">Cambiar estado</button>
-          <button class="btn btn-ghost" onclick="if(confirm('¿Eliminar?')) { eliminar(${t.id}).then(() => cerrarTicketModal()); }">Eliminar</button>
+          ${puedeCambiar ? `<button class="btn btn-ghost" onclick="cambiarEstado(${t.id}).then(() => { cerrarTicketModal(); abrirTicket(${t.id}); })">Cambiar estado</button>` : ''}
+          ${puedeEliminar ? `<button class="btn btn-ghost" onclick="if(confirm('¿Eliminar?')) { eliminar(${t.id}).then(() => cerrarTicketModal()); }">Eliminar</button>` : ''}
         </div>
         <div class="timeline-title">
           <span>📝 Historial</span>
@@ -2312,7 +2367,7 @@ async function guardarUsuario(id) {
     localStorage.setItem('tema', esClaro ? 'light' : 'dark');
     if (chartTendencia) { chartTendencia.destroy(); chartTendencia = null; }
     if (chartPrioridad) { chartPrioridad.destroy(); chartPrioridad = null; }
-    actualizarGraficos();
+    if (perfilActual?.rol !== 'solicitante') actualizarGraficos();
   }
 
   /* EXPORTAR CSV */
@@ -2504,7 +2559,7 @@ async function guardarUsuario(id) {
       if (usuarioActual) cargarTickets();
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'usuarios' }, () => {
-      if (usuarioActual) cargarUsuarios();
+      if (usuarioActual && perfilActual?.rol === 'admin') cargarUsuarios();
     })
     .subscribe();
 
