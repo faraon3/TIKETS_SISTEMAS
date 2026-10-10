@@ -1493,8 +1493,8 @@
     await cargarPerfilYEntrar();
   }
 
-  async function cargarPerfilYEntrar() {
-    const { data: perfil } = await supabase
+    async function cargarPerfilYEntrar() {
+    const { data: perfil } = await sb
       .from('perfiles')
       .select('*')
       .eq('id', usuarioActual.id)
@@ -1530,8 +1530,8 @@
     await Promise.all([cargarTickets(), cargarUsuarios()]);
   }
 
-  async function cargarTickets() {
-    const { data, error } = await supabase
+    async function cargarTickets() {
+    const { data, error } = await sb
       .from('tickets')
       .select('*')
       .order('fecha_creacion', { ascending: false });
@@ -1549,8 +1549,8 @@
     render();
   }
 
-  async function cargarUsuarios() {
-    const { data, error } = await supabase
+    async function cargarUsuarios() {
+    const { data, error } = await sb
       .from('usuarios')
       .select('*')
       .order('nombre', { ascending: true });
@@ -2428,7 +2428,7 @@
     verificarSesion();
   });
 
-  supabase
+  sb
     .channel('realtime-todo')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => {
       if (usuarioActual) cargarTickets();
