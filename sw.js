@@ -1,63 +1,115 @@
-const CACHE = 'mesa-ayuda-v9';
+/* ============================================
+   MESA DE AYUDA - SERVICE WORKER
+   Versión: v10
+   ============================================ */
+
+const CACHE_NAME = 'mesa-ayuda-v10';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json'
 ];
 
-self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE)
-      .then(c => c.addAll(ASSETS).catch(() => {}))
-      .then(() => self.skipWaiting())
-      .catch(() => self.skipWaiting())
-  );
-});
-
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys()
-      .then(keys =>
-        Promise.all(
-          keys.filter(k => k !== CACHE).map(k => caches.delete(k).catch(() => {}))
-        )
-      )
-      .then(() => self.clients.claim())
-      .catch(() => self.clients.claim())
-  );
-});
-
-self.addEventListener('fetch', e => {
-  // Ignorar métodos que no sean GET
-  if (e.request.method !== 'GET') return;
-  
-  // Ignorar extensiones de Chrome y otros esquemas no HTTP
-  if (!e.request.url.startsWith('http')) return;
-  
-  e.respondWith(
-    caches.match(e.request)
-      .then(r => {
-        if (r) return r;
-        return fetch(e.request)
-          .then(resp => {
-            // Solo cachear respuestas válidas
-            if (!resp || resp.status !== 200) return resp;
-            
-            // Cachear solo recursos externos (CDN, fonts)
-            if (e.request.url.includes('cdn') || e.request.url.includes('fonts')) {
-              try {
-                const clone = resp.clone();
-                caches.open(CACHE)
-                  .then(c => c.put(e.request, clone))
-                  .catch(err => console.warn('⚠ Cache put failed:', err.message));
-              } catch (err) {
-                // Ignorar errores de clonación
-              }
-            }
-            return resp;
-          })
-          .catch(() => caches.match('./index.html'));
+/* ============================================
+   INSTALL - Cachear recursos iniciales
+   ============================================ */
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => {
+        return cache.addAll(ASSETS).catch((err) => {
+          console.warn('⚠ No se pudieron cachear todos los assets:', err.message);
+        });
       })
-      .catch(() => caches.match('./index.html'))
+      .then(() => self.skipWaiting())
+      .catch((err) => {
+        console.error('❌ Error en install:', err.message);
+        return self.skipWaiting();
+      })
   );
 });
+
+/* ============================================
+   ACTIVATE - Limpiar cachés viejos
+   ============================================ */
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys()
+      .then((keys) => {
+        return Promise.all(
+          keys
+            .filter((key) => key !== CACHE_NAME)
+            .map((key) => {
+              return caches.delete(key).catch((err) => {
+                console.warn('⚠ No se pudo borrar caché', key, err.message);
+              });
+            })
+        );
+      })
+      .then(() => self.clients.claim())
+      .catch((err) => {
+        console.error('❌ Error en activate:', err.message);
+        return self.clients.claim();
+      })
+  );
+});
+
+/* ============================================
+   FETCH - Interceptar peticiones
+   ============================================ */
+self.addEventListener('fetch', (event) => {
+  const req = event.request;
+
+  // Solo GET
+  if (req.method !== 'GET') return;
+
+  // Solo URLs HTTP/HTTPS (ignora chrome-extension, moz-extension, etc)
+  if (!req.url.startsWith('http://') && !req.url.startsWith('https://')) return;
+
+  event.respondWith(manejarFetch(req));
+});
+
+async function manejarFetch(req) {
+  try {
+    // 1. Buscar en caché
+    const cached = await caches.match(req);
+    if (cached) return cached;
+
+    // 2. Si no está, traer de la red
+    const response = await fetch(req);
+
+    // 3. Cachear solo si es válido y es recurso externo
+    if (response && response.status === 200 && esRecursoCacheable(req.url)) {
+      cachearRespuesta(req, response).catch((err) => {
+        console.warn('⚠ No se pudo cachear:', req.url, err.message);
+      });
+    }
+
+    return response;
+  } catch (err) {
+    // 4. Si falla la red, intentar servir index.html (modo offline)
+    const fallback = await caches.match('./index.html');
+    if (fallback) return fallback;
+    throw err;
+  }
+}
+
+function esRecursoCacheable(url) {
+  return url.includes('cdn.jsdelivr.net') ||
+         url.includes('fonts.googleapis.com') ||
+         url.includes('fonts.gstatic.com');
+}
+
+async function cachearRespuesta(req, response) {
+  try {
+    const cache = await caches.open(CACHE_NAME);
+    // Clonar antes de guardar
+    const clone = response.clone();
+    await cache.put(req, clone);
+  } catch (err) {
+    // Silenciar error si el request ya no es válido
+    if (err.name !== 'InvalidStateError') {
+      throw err;
+    }
+  }
+}
