@@ -1948,57 +1948,129 @@
     document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
   }
 
-  async function guardarUsuario(id) {
-    const nombre = document.getElementById('uNombre').value.trim();
-    const correo = document.getElementById('uCorreo').value.trim();
-    const telefono = document.getElementById('uTelefono').value.trim();
-    const cargo = document.getElementById('uCargo').value.trim();
-    const area = document.getElementById('uArea').value.trim();
+  
+async function guardarUsuario(id) {
+  const nombre = document.getElementById('uNombre').value.trim();
+  const correo = document.getElementById('uCorreo').value.trim().toLowerCase();
+  const telefono = document.getElementById('uTelefono').value.trim();
+  const cargo = document.getElementById('uCargo').value.trim();
+  const area = document.getElementById('uArea').value.trim();
 
-    if (!nombre) { alert('El nombre es obligatorio'); return; }
-    if (!correo) { alert('El correo es obligatorio'); return; }
+  if (!nombre) {
+    alert('El nombre es obligatorio');
+    return;
+  }
 
-    if (id) {
-      const { error } = await sb.from('usuarios').update({
-        nombre, telefono: telefono || null, cargo: cargo || null, area: area || null
-      }).eq('id', id);
+  if (!correo) {
+    alert('El correo es obligatorio');
+    return;
+  }
 
-      if (error) { console.error(error); alert('Error al guardar: ' + error.message); return; }
-      cerrarModalUsuario();
-      await cargarUsuarios();
-      return;
-    }
+  // Editar usuario existente
+  if (id) {
+    const { error } = await sb
+      .from('usuarios')
+      .update({
+        nombre,
+        telefono: telefono || null,
+        cargo: cargo || null,
+        area: area || null
+      })
+      .eq('id', id);
 
-    const password = document.getElementById('uPassword').value;
-    const rol = document.getElementById('uRol').value;
-
-    if (!password || password.length < 6) {
-      alert('La contraseña debe tener al menos 6 caracteres');
-      return;
-    }
-
-    const btn = document.querySelector('.modal-overlay .btn-primary');
-    if (btn) { btn.disabled = true; btn.textContent = '⏳ Creando cuenta...'; }
-
-    const { data, error } = await sb.functions.invoke('crear-usuario', {
-      body: { email: correo, password, nombre, rol, telefono, cargo, area }
-    });
-
-    if (error || data?.error) {
-      console.error(error || data.error);
-      alert('Error al crear usuario: ' + (data?.error || error.message));
-      if (btn) { btn.disabled = false; btn.textContent = 'Crear usuario y cuenta'; }
+    if (error) {
+      console.error('Error actualizando usuario:', error);
+      alert('Error al guardar: ' + error.message);
       return;
     }
 
     cerrarModalUsuario();
-    await Promise.all([cargarUsuarios(), cargarTickets()]);
+    await cargarUsuarios();
+    return;
+  }
 
-    if (usuarioSeleccionado === null) {
-      const nuevo = usuarios.find(x => x.correo === correo);
-      if (nuevo) seleccionarUsuario(nuevo.id);
+  // Crear usuario nuevo
+  const password = document.getElementById('uPassword').value;
+  const rol = document.getElementById('uRol').value;
+
+  if (!password || password.length < 6) {
+    alert('La contraseña debe tener al menos 6 caracteres');
+    return;
+  }
+
+  const btn = document.querySelector('.modal-overlay .btn-primary');
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Creando cuenta...';
+  }
+
+  try {
+    const { data, error } = await sb.functions.invoke('crear-usuario', {
+      body: {
+        email: correo,
+        password,
+        nombre,
+        rol,
+        telefono,
+        cargo,
+        area
+      }
+    });
+
+    if (error) {
+      let detalle = error.message;
+
+      if (error.context) {
+        try {
+          const respuesta = await error.context.clone().json();
+          detalle = respuesta.detalle || respuesta.error || detalle;
+        } catch (_) {}
+      }
+
+      console.error('Error creando usuario:', error, data);
+      alert('Error al crear usuario: ' + detalle);
+      return;
+    }
+
+    if (!data || data.success !== true) {
+      console.error('Respuesta inesperada:', data);
+      alert(
+        'No se confirmó la creación del usuario: ' +
+        (data?.detalle || data?.error || 'Respuesta inesperada')
+      );
+      return;
+    }
+
+    cerrarModalUsuario();
+
+    await Promise.all([
+      cargarUsuarios(),
+      cargarTickets()
+    ]);
+
+    // No asumir que la lista local ya contiene al usuario nuevo.
+    const nuevo = usuarios.find(
+      x => x.correo?.toLowerCase() === correo
+    );
+
+    if (nuevo && usuarioSeleccionado === null) {
+      seleccionarUsuario(nuevo.id);
+    }
+
+    alert('Usuario creado correctamente');
+
+  } catch (e) {
+    console.error('Error inesperado al crear usuario:', e);
+    alert('Ocurrió un error inesperado: ' + e.message);
+
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Crear usuario y cuenta';
     }
   }
+}
 
   async function eliminarUsuario(id) {
     const u = usuarios.find(x => x.id === id);
