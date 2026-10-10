@@ -1,4 +1,4 @@
-const CACHE = 'mesa-ayuda-v5';
+const CACHE = 'mesa-ayuda-v6';
 const ASSETS = [
   './',
   './index.html',
