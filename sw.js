@@ -21,11 +21,14 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+  // Ignorar extensiones de Chrome
+  if (!e.request.url.startsWith('http')) return;
+  
   e.respondWith(
     caches.match(e.request).then(r => r || fetch(e.request).then(resp => {
       if (e.request.url.includes('cdn') || e.request.url.includes('fonts')) {
         const clone = resp.clone();
-        caches.open(CACHE).then(c => c.put(e.request, clone));
+        caches.open(CACHE).then(c => c.put(e.request, clone)).catch(() => {});
       }
       return resp;
     }).catch(() => caches.match('./index.html')))
