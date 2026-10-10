@@ -16,6 +16,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
     --bg: #08080c;
@@ -381,6 +382,104 @@
 
   select option { background: var(--bg-elev); color: var(--text); }
 
+  /* AUTOCOMPLETE USUARIOS */
+  .autocomplete-wrap {
+    position: relative;
+  }
+
+  .autocomplete-list {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--bg-elev);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    max-height: 260px;
+    overflow-y: auto;
+    z-index: 100;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+    display: none;
+  }
+
+  .autocomplete-list.activo { display: block; }
+
+  .autocomplete-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: var(--transition);
+  }
+  .autocomplete-item:last-child { border-bottom: none; }
+  .autocomplete-item:hover,
+  .autocomplete-item.seleccionado {
+    background: rgba(124, 92, 255, 0.12);
+  }
+
+  .autocomplete-nombre {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  .autocomplete-meta {
+    font-size: 11.5px;
+    color: var(--text-muted);
+  }
+
+  .autocomplete-empty {
+    padding: 16px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 12.5px;
+  }
+
+  /* Usuario seleccionado */
+  .usuario-chip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: rgba(124, 92, 255, 0.08);
+    border: 1px solid rgba(124, 92, 255, 0.25);
+    border-radius: var(--radius-sm);
+    margin-top: 8px;
+  }
+
+  .usuario-chip-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .usuario-chip-nombre {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  .usuario-chip-meta {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .usuario-chip-remove {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    transition: var(--transition);
+    flex-shrink: 0;
+  }
+  .usuario-chip-remove:hover {
+    background: rgba(239, 68, 68, 0.12);
+    color: var(--danger);
+  }
+
   /* BUTTONS */
   .btn {
     display: inline-flex;
@@ -427,6 +526,18 @@
     border-color: var(--border-strong);
   }
 
+  .btn-danger {
+    background: rgba(239, 68, 68, 0.08);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+  .btn-danger:hover {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.4);
+  }
+
   /* FILTROS */
   .filtros {
     display: flex;
@@ -456,8 +567,8 @@
     border-color: var(--text);
   }
 
-  /* TICKETS HEADER */
-  .tickets-header {
+  /* SECTION HEADER */
+  .section-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -465,7 +576,13 @@
     gap: 12px;
     flex-wrap: wrap;
   }
-  .tickets-header .card-title { margin-bottom: 0; }
+  .section-header .card-title { margin-bottom: 0; }
+
+  .section-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
 
   /* BUSCADOR */
   .search-wrap {
@@ -621,6 +738,59 @@
     z-index: 2;
   }
 
+  /* USUARIOS */
+  .usuarios-list { display: grid; gap: 10px; }
+
+  .usuario-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px 18px;
+    transition: var(--transition);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .usuario-card:hover {
+    background: var(--surface-hover);
+    border-color: var(--border-strong);
+  }
+
+  .usuario-card-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .usuario-card-nombre {
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .usuario-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .usuario-card-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    word-break: break-word;
+  }
+
+  .usuario-card-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
   .empty {
     text-align: center;
     padding: 40px 20px;
@@ -664,7 +834,187 @@
     background: rgba(0, 0, 0, 0.02);
   }
 
-  /* MODAL DE VISTA PREVIA PDF */
+  /* MODALES */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.activo { display: flex; }
+
+  .modal {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    max-width: 640px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+  }
+
+  .modal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .modal-head h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    margin-bottom: 6px;
+    word-break: break-word;
+  }
+
+  .modal-close {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    display: grid;
+    place-items: center;
+    transition: var(--transition);
+    flex-shrink: 0;
+  }
+  .modal-close:hover {
+    background: var(--surface-hover);
+    color: var(--text);
+    border-color: var(--border-strong);
+  }
+
+  /* TIMELINE */
+  .timeline-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .timeline {
+    position: relative;
+    padding-left: 22px;
+    margin-bottom: 20px;
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 6px;
+  }
+
+  .timeline::-webkit-scrollbar { width: 4px; }
+  .timeline::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 4px;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 6px;
+    bottom: 6px;
+    width: 1px;
+    background: var(--border-strong);
+  }
+
+  .timeline-item {
+    position: relative;
+    padding-bottom: 16px;
+    font-size: 13px;
+    animation: slideIn 0.3s ease;
+  }
+  .timeline-item:last-child { padding-bottom: 0; }
+
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -22px;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg-elev);
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+
+  .timeline-item.estado::before { background: var(--warning); box-shadow: 0 0 0 2px var(--warning); }
+  .timeline-item.comentario::before { background: var(--accent-2); box-shadow: 0 0 0 2px var(--accent-2); }
+  .timeline-item.creacion::before { background: var(--success); box-shadow: 0 0 0 2px var(--success); }
+
+  .timeline-item-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+  }
+
+  .timeline-item-autor {
+    font-weight: 600;
+    color: var(--text);
+    font-size: 12.5px;
+  }
+
+  .timeline-item-fecha {
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .timeline-item-texto {
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.5;
+    word-break: break-word;
+  }
+
+  /* FORMULARIO COMENTARIO */
+  .comment-form {
+    display: grid;
+    gap: 10px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .comment-form input,
+  .comment-form textarea {
+    font-size: 13.5px;
+    padding: 12px 14px;
+  }
+
+  .comment-form textarea {
+    min-height: 70px;
+    resize: vertical;
+  }
+
+  .comment-form button {
+    padding: 12px 18px;
+    font-size: 13.5px;
+    width: 100%;
+  }
+
+  /* PDF */
   .pdf-overlay {
     position: fixed;
     inset: 0;
@@ -887,225 +1237,29 @@
   }
   .pdf-btn-secondary:hover { background: #e5e5ec; }
 
-  /* ============ MODAL DE DETALLE DEL TICKET ============ */
-  .ticket-modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.75);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    z-index: 9999;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-  }
-  .ticket-modal-overlay.activo { display: flex; }
-
-  .ticket-modal {
-    background: var(--bg-elev);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 28px;
-    max-width: 640px;
-    width: 100%;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
-  }
-
-  .ticket-modal-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 20px;
-    padding-bottom: 18px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .ticket-modal-head h2 {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--text);
-    letter-spacing: -0.02em;
-    margin-bottom: 6px;
-    word-break: break-word;
-  }
-
-  .ticket-modal-close {
-    background: transparent;
-    border: 1px solid var(--border);
+  /* ESTADO CARGA */
+  .loading {
+    text-align: center;
+    padding: 60px 20px;
     color: var(--text-muted);
+    font-size: 14px;
+  }
+
+  .spinner {
     width: 32px;
     height: 32px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 16px;
-    display: grid;
-    place-items: center;
-    transition: var(--transition);
-    flex-shrink: 0;
-  }
-  .ticket-modal-close:hover {
-    background: var(--surface-hover);
-    color: var(--text);
-    border-color: var(--border-strong);
-  }
-
-  .ticket-modal-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px 16px;
-    font-size: 12.5px;
-    color: var(--text-muted);
-    margin-bottom: 16px;
-  }
-  .ticket-modal-meta span {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-  }
-
-  .ticket-modal-desc {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 14px 16px;
-    font-size: 13.5px;
-    color: var(--text-muted);
-    line-height: 1.6;
-    margin-bottom: 20px;
-    word-break: break-word;
-  }
-
-  body.light .ticket-modal-desc {
-    background: rgba(0, 0, 0, 0.02);
-  }
-
-  .ticket-modal-actions {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-bottom: 24px;
-  }
-
-  /* TIMELINE */
-  .timeline-title {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .timeline {
-    position: relative;
-    padding-left: 22px;
-    margin-bottom: 20px;
-    max-height: 280px;
-    overflow-y: auto;
-    padding-right: 6px;
-  }
-
-  .timeline::-webkit-scrollbar { width: 4px; }
-  .timeline::-webkit-scrollbar-thumb {
-    background: var(--border-strong);
-    border-radius: 4px;
-  }
-
-  .timeline::before {
-    content: '';
-    position: absolute;
-    left: 6px;
-    top: 6px;
-    bottom: 6px;
-    width: 1px;
-    background: var(--border-strong);
-  }
-
-  .timeline-item {
-    position: relative;
-    padding-bottom: 16px;
-    font-size: 13px;
-    animation: slideIn 0.3s ease;
-  }
-  .timeline-item:last-child { padding-bottom: 0; }
-
-  .timeline-item::before {
-    content: '';
-    position: absolute;
-    left: -22px;
-    top: 5px;
-    width: 10px;
-    height: 10px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
     border-radius: 50%;
-    background: var(--accent);
-    border: 2px solid var(--bg-elev);
-    box-shadow: 0 0 0 2px var(--accent);
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
   }
 
-  .timeline-item.estado::before { background: var(--warning); box-shadow: 0 0 0 2px var(--warning); }
-  .timeline-item.comentario::before { background: var(--accent-2); box-shadow: 0 0 0 2px var(--accent-2); }
-  .timeline-item.creacion::before { background: var(--success); box-shadow: 0 0 0 2px var(--success); }
-
-  .timeline-item-head {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 4px;
-    flex-wrap: wrap;
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 
-  .timeline-item-autor {
-    font-weight: 600;
-    color: var(--text);
-    font-size: 12.5px;
-  }
-
-  .timeline-item-fecha {
-    font-size: 11px;
-    color: var(--text-dim);
-  }
-
-  .timeline-item-texto {
-    color: var(--text-muted);
-    font-size: 13px;
-    line-height: 1.5;
-    word-break: break-word;
-  }
-
-  /* FORMULARIO COMENTARIO */
-  .comment-form {
-    display: grid;
-    gap: 10px;
-    padding-top: 16px;
-    border-top: 1px solid var(--border);
-  }
-
-  .comment-form input,
-  .comment-form textarea {
-    font-size: 13.5px;
-    padding: 12px 14px;
-  }
-
-  .comment-form textarea {
-    min-height: 70px;
-    resize: vertical;
-  }
-
-  .comment-form button {
-    padding: 12px 18px;
-    font-size: 13.5px;
-    width: 100%;
-  }
-
-  /* ============ RESPONSIVE ============ */
-
+  /* RESPONSIVE */
   @media (max-width: 900px) {
     .kpi-grid { grid-template-columns: repeat(3, 1fr); }
     .pdf-kpis { grid-template-columns: repeat(3, 1fr); }
@@ -1142,21 +1296,13 @@
     .btn-icon { width: 34px; height: 34px; font-size: 14px; }
     .live-dot { padding: 5px 10px; font-size: 10px; }
 
-    .kpi-grid {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      margin-bottom: 16px;
-    }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
     .kpi { padding: 14px; }
     .kpi-label { font-size: 10px; letter-spacing: 0.05em; }
     .kpi-value { font-size: 24px; }
     .kpi-sub { font-size: 10.5px; margin-top: 6px; }
 
-    .stats-head {
-      flex-direction: column;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
+    .stats-head { flex-direction: column; gap: 12px; margin-bottom: 16px; }
     .stats-percent { font-size: 22px; }
     .stats-meta { font-size: 12px; gap: 12px; width: 100%; }
     .stats-foot { font-size: 11.5px; gap: 12px; flex-direction: column; }
@@ -1186,8 +1332,9 @@
     .search-wrap input { padding: 12px 14px 12px 38px; font-size: 14px; }
     .search-icon { left: 13px; font-size: 13px; }
 
-    .tickets-header { flex-direction: column; align-items: stretch; gap: 10px; }
-    .tickets-header .btn { width: 100%; }
+    .section-header { flex-direction: column; align-items: stretch; gap: 10px; }
+    .section-actions { width: 100%; }
+    .section-actions .btn { flex: 1; }
 
     .ticket { padding: 14px 16px; }
     .ticket-head { flex-direction: column; gap: 8px; }
@@ -1202,6 +1349,9 @@
     .btn-ghost { font-size: 11.5px; padding: 8px 10px; }
 
     .card-title { font-size: 11.5px; letter-spacing: 0.06em; margin-bottom: 14px; }
+
+    .usuario-card { flex-direction: column; align-items: stretch; padding: 14px; }
+    .usuario-card-actions { justify-content: flex-end; }
 
     .pdf-overlay { padding: 10px; }
     .pdf-preview { padding: 16px; max-height: 95vh; border-radius: 10px; }
@@ -1221,10 +1371,8 @@
     .pdf-btn { width: 100%; padding: 12px; font-size: 13px; }
     .pdf-footer { font-size: 9px; flex-direction: column; gap: 6px; }
 
-    .ticket-modal { padding: 20px 18px; }
-    .ticket-modal-head h2 { font-size: 16px; }
-    .ticket-modal-actions { gap: 6px; }
-    .ticket-modal-actions .btn { flex: 1; }
+    .modal { padding: 20px 18px; }
+    .modal-head h2 { font-size: 16px; }
     .timeline { max-height: 240px; }
   }
 
@@ -1240,8 +1388,6 @@
     header h1 { font-size: 16px; }
     .ticket-actions { flex-direction: column; }
     .ticket-actions .btn { width: 100%; }
-    .ticket-modal-actions { flex-direction: column; }
-    .ticket-modal-actions .btn { width: 100%; }
   }
 </style>
 </head>
@@ -1313,6 +1459,7 @@
       <span>⏱ Tiempo prom. resolución: <b id="tiempoProm">—</b></span>
       <span>📅 Hoy: <b id="ticketsHoy">0</b></span>
       <span>🔥 Alta prioridad abierta: <b id="altaCritica">0</b></span>
+      <span>👥 Usuarios: <b id="totalUsuarios">0</b></span>
     </div>
   </section>
 
@@ -1336,30 +1483,51 @@
   <section class="card">
     <div class="card-title">Nuevo ticket</div>
     <div class="form-grid">
+      <div>
+        <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.05em;">Solicitante *</label>
+        <div class="autocomplete-wrap">
+          <input 
+            id="buscadorUsuario" 
+            placeholder="🔍 Buscar por nombre o correo..." 
+            autocomplete="off" 
+            oninput="buscarUsuario()"
+            onfocus="buscarUsuario()"
+          />
+          <div id="autocompleteList" class="autocomplete-list"></div>
+        </div>
+        <div id="usuarioSeleccionado"></div>
+      </div>
+
       <input id="titulo" placeholder="Título del problema" autocomplete="off" />
       <textarea id="descripcion" placeholder="Describe el problema con detalle..."></textarea>
+
       <div class="form-row">
-        <input id="solicitante" placeholder="Solicitante" autocomplete="off" />
         <select id="prioridad">
           <option value="baja">🟢 Prioridad baja (SLA 72h)</option>
           <option value="media" selected>🟡 Prioridad media (SLA 24h)</option>
           <option value="alta">🔴 Prioridad alta (SLA 4h)</option>
         </select>
+        <button class="btn btn-ghost" style="width:100%; padding:14px;" onclick="abrirModalUsuarioNuevo()">
+          ➕ Nuevo usuario
+        </button>
       </div>
+
       <button class="btn btn-primary" onclick="crearTicket()">Crear ticket →</button>
     </div>
   </section>
 
   <!-- LISTA DE TICKETS -->
   <section class="card">
-    <div class="tickets-header">
+    <div class="section-header">
       <div class="card-title">Tickets</div>
-      <button class="btn btn-ghost" onclick="exportarCSV()">📥 Exportar CSV</button>
+      <div class="section-actions">
+        <button class="btn btn-ghost" onclick="exportarCSV()">📥 Exportar CSV</button>
+      </div>
     </div>
 
     <div class="search-wrap">
       <span class="search-icon">🔍</span>
-      <input id="buscador" placeholder="Buscar por título o solicitante..." oninput="render()" />
+      <input id="buscador" placeholder="Buscar por título, solicitante o correo..." oninput="render()" />
     </div>
 
     <div class="filtros">
@@ -1369,908 +1537,40 @@
       <button class="chip" data-filtro="cerrado" onclick="filtrar('cerrado', this)">Cerrados</button>
     </div>
 
-    <div id="listaTickets" class="tickets-list"></div>
+    <div id="listaTickets" class="tickets-list">
+      <div class="loading">
+        <div class="spinner"></div>
+        Cargando tickets...
+      </div>
+    </div>
+  </section>
+
+  <!-- DIRECTORIO DE USUARIOS -->
+  <section class="card">
+    <div class="section-header">
+      <div class="card-title">👥 Directorio de usuarios</div>
+      <div class="section-actions">
+        <button class="btn btn-ghost" onclick="abrirModalUsuarioNuevo()">➕ Nuevo usuario</button>
+      </div>
+    </div>
+
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input id="buscadorUsuarios" placeholder="Buscar por nombre, correo, cargo o área..." oninput="renderUsuarios()" />
+    </div>
+
+    <div id="listaUsuarios" class="usuarios-list">
+      <div class="loading">
+        <div class="spinner"></div>
+        Cargando usuarios...
+      </div>
+    </div>
   </section>
 </div>
 
 <script>
-  let tickets = JSON.parse(localStorage.getItem('tickets_v3')) || [];
-  let filtroActual = 'todos';
-
-  const SLA = { alta: 4, media: 24, baja: 72 };
-  const ORDEN_PRIORIDAD = { alta: 1, media: 2, baja: 3 };
-
-  const guardar = () => localStorage.setItem('tickets_v3', JSON.stringify(tickets));
-
-  /* ============ CREAR ============ */
-  function crearTicket() {
-    const titulo = document.getElementById('titulo').value.trim();
-    const descripcion = document.getElementById('descripcion').value.trim();
-    const solicitante = document.getElementById('solicitante').value.trim();
-    const prioridad = document.getElementById('prioridad').value;
-
-    if (!titulo || !solicitante) {
-      alert('El título y el solicitante son obligatorios');
-      return;
-    }
-
-    const ahora = new Date();
-    const fechaFmt = ahora.toLocaleString('es-CO', {
-      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
-    });
-
-    const nuevoTicket = {
-      id: Date.now(),
-      titulo, descripcion, solicitante, prioridad,
-      estado: 'abierto',
-      fechaCreacion: ahora.toISOString(),
-      fechaCierre: null,
-      fecha: fechaFmt,
-      historial: [{
-        tipo: 'creacion',
-        autor: solicitante,
-        texto: `Ticket creado con prioridad ${prioridad.toUpperCase()}`,
-        fecha: fechaFmt,
-        timestamp: ahora.toISOString()
-      }]
-    };
-
-    tickets.unshift(nuevoTicket);
-    guardar();
-    render();
-
-    if (prioridad === 'alta') {
-      notificarAltaPrioridad(nuevoTicket);
-    }
-
-    document.getElementById('titulo').value = '';
-    document.getElementById('descripcion').value = '';
-    document.getElementById('solicitante').value = '';
-    document.getElementById('prioridad').value = 'media';
-    document.getElementById('titulo').focus();
-  }
-
-  /* ============ CAMBIAR ESTADO ============ */
-  function cambiarEstado(id) {
-    const t = tickets.find(x => x.id === id);
-    if (!t) return;
-
-    if (!t.historial) t.historial = [];
-
-    const ahora = new Date();
-    const fechaFmt = ahora.toLocaleString('es-CO', {
-      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
-    });
-
-    let textoCambio = '';
-
-    if (t.estado === 'abierto') {
-      t.estado = 'proceso';
-      textoCambio = 'Estado: ABIERTO → EN PROCESO';
-    } else if (t.estado === 'proceso') {
-      t.estado = 'cerrado';
-      t.fechaCierre = ahora.toISOString();
-      textoCambio = 'Estado: EN PROCESO → CERRADO';
-    } else {
-      t.estado = 'abierto';
-      t.fechaCierre = null;
-      textoCambio = 'Estado: CERRADO → ABIERTO (reabierto)';
-    }
-
-    t.historial.push({
-      tipo: 'estado',
-      autor: 'Sistema',
-      texto: textoCambio,
-      fecha: fechaFmt,
-      timestamp: ahora.toISOString()
-    });
-
-    guardar();
-    render();
-  }
-
-  /* ============ ELIMINAR ============ */
-  function eliminar(id) {
-    if (!confirm('¿Eliminar este ticket?')) return;
-    tickets = tickets.filter(x => x.id !== id);
-    guardar();
-    render();
-  }
-
-  /* ============ FILTRAR ============ */
-  function filtrar(filtro, btn) {
-    filtroActual = filtro;
-    document.querySelectorAll('.chip').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    render();
-  }
-
-  /* ============ SLA ============ */
-  function horasTranscurridas(t) {
-    const fin = t.fechaCierre ? new Date(t.fechaCierre) : new Date();
-    return (fin - new Date(t.fechaCreacion)) / 3600000;
-  }
-
-  function estaVencido(t) {
-    if (t.estado === 'cerrado') return false;
-    return horasTranscurridas(t) > SLA[t.prioridad];
-  }
-
-  /* ============ KPIs ============ */
-  function calcularKPIs() {
-    const total = tickets.length;
-    const abiertos = tickets.filter(t => t.estado === 'abierto').length;
-    const proceso = tickets.filter(t => t.estado === 'proceso').length;
-    const cerrados = tickets.filter(t => t.estado === 'cerrado').length;
-    const vencidos = tickets.filter(estaVencido).length;
-    const pct = total ? Math.round((cerrados / total) * 100) : 0;
-
-    const alta = tickets.filter(t => t.prioridad === 'alta').length;
-    const media = tickets.filter(t => t.prioridad === 'media').length;
-    const baja = tickets.filter(t => t.prioridad === 'baja').length;
-    const altaCritica = tickets.filter(t => t.prioridad === 'alta' && t.estado !== 'cerrado').length;
-
-    const cerradosConTiempo = tickets.filter(t => t.fechaCierre && t.fechaCreacion);
-    let tiempoProm = '—';
-    if (cerradosConTiempo.length) {
-      const sumaMs = cerradosConTiempo.reduce((acc, t) => {
-        return acc + (new Date(t.fechaCierre) - new Date(t.fechaCreacion));
-      }, 0);
-      tiempoProm = formatearDuracion(sumaMs / cerradosConTiempo.length);
-    }
-
-    const hoy = new Date().toDateString();
-    const ticketsHoy = tickets.filter(t => new Date(t.fechaCreacion).toDateString() === hoy).length;
-
-    document.getElementById('kpiTotal').textContent = total;
-    document.getElementById('kpiTotalSub').textContent = ticketsHoy + ' creados hoy';
-    document.getElementById('kpiAbiertos').textContent = abiertos;
-    document.getElementById('kpiProceso').textContent = proceso;
-    document.getElementById('kpiCerrados').textContent = cerrados;
-    document.getElementById('kpiVencidos').textContent = vencidos;
-    document.getElementById('pctResolucion').textContent = pct + '%';
-    document.getElementById('progressBar').style.width = pct + '%';
-    document.getElementById('pAlta').textContent = alta;
-    document.getElementById('pMedia').textContent = media;
-    document.getElementById('pBaja').textContent = baja;
-    document.getElementById('tiempoProm').textContent = tiempoProm;
-    document.getElementById('ticketsHoy').textContent = ticketsHoy;
-    document.getElementById('altaCritica').textContent = altaCritica;
-  }
-
-  function formatearDuracion(ms) {
-    const min = Math.floor(ms / 60000);
-    if (min < 60) return min + ' min';
-    const h = Math.floor(min / 60);
-    if (h < 24) return h + 'h ' + (min % 60) + 'm';
-    const d = Math.floor(h / 24);
-    return d + 'd ' + (h % 24) + 'h';
-  }
-
-  /* ============ RENDER ============ */
-  function render() {
-    const lista = document.getElementById('listaTickets');
-    const query = (document.getElementById('buscador')?.value || '').toLowerCase().trim();
-
-    let visibles = filtroActual === 'todos'
-      ? [...tickets]
-      : tickets.filter(t => t.estado === filtroActual);
-
-    if (query) {
-      visibles = visibles.filter(t =>
-        t.titulo.toLowerCase().includes(query) ||
-        t.solicitante.toLowerCase().includes(query) ||
-        (t.descripcion || '').toLowerCase().includes(query)
-      );
-    }
-
-    visibles.sort((a, b) => {
-      const p = ORDEN_PRIORIDAD[a.prioridad] - ORDEN_PRIORIDAD[b.prioridad];
-      if (p !== 0) return p;
-      return new Date(b.fechaCreacion) - new Date(a.fechaCreacion);
-    });
-
-    if (visibles.length === 0) {
-      lista.innerHTML = `
-        <div class="empty">
-          <div class="empty-icon">◇</div>
-          ${query ? 'No hay resultados para "' + escapeHtml(query) + '"' : 'No hay tickets para mostrar'}
-        </div>`;
-    } else {
-      lista.innerHTML = visibles.map(t => {
-        const vencido = estaVencido(t);
-        const numComentarios = (t.historial || []).length;
-        return `
-        <article class="ticket ${t.prioridad} ${vencido ? 'vencido' : ''}" onclick="abrirTicket(${t.id})">
-          <div class="ticket-head">
-            <h3>${escapeHtml(t.titulo)}</h3>
-            <span>
-              ${vencido ? '<span class="badge badge-vencido">⚠ VENCIDO</span>' : ''}
-              <span class="badge ${t.estado}">${t.estado.toUpperCase()}</span>
-            </span>
-          </div>
-          ${t.descripcion ? '<p>' + escapeHtml(t.descripcion) + '</p>' : ''}
-          <div class="ticket-meta">
-            <span>👤 ${escapeHtml(t.solicitante)}</span>
-            <span>⚡ ${t.prioridad} · SLA ${SLA[t.prioridad]}h</span>
-            <span>🕒 ${t.fecha}</span>
-            ${numComentarios > 0 ? `<span>💬 ${numComentarios} actividad${numComentarios !== 1 ? 'es' : ''}</span>` : ''}
-          </div>
-          <div class="ticket-actions">
-            <button class="btn btn-ghost" onclick="event.stopPropagation(); cambiarEstado(${t.id})">Cambiar estado</button>
-            <button class="btn btn-ghost" onclick="event.stopPropagation(); eliminar(${t.id})">Eliminar</button>
-          </div>
-        </article>`;
-      }).join('');
-    }
-
-    calcularKPIs();
-    actualizarGraficos();
-  }
-
-  /* ============ EXPORTAR CSV ============ */
-  function exportarCSV() {
-    if (tickets.length === 0) {
-      alert('No hay tickets para exportar');
-      return;
-    }
-
-    const encabezados = ['ID', 'Título', 'Descripción', 'Solicitante', 'Prioridad', 'Estado', 'Fecha creación', 'Fecha cierre', 'Vencido', 'Actividad'];
-
-    const filas = tickets.map(t => [
-      t.id,
-      t.titulo,
-      t.descripcion || '',
-      t.solicitante,
-      t.prioridad,
-      t.estado,
-      new Date(t.fechaCreacion).toLocaleString('es-CO'),
-      t.fechaCierre ? new Date(t.fechaCierre).toLocaleString('es-CO') : '',
-      estaVencido(t) ? 'SÍ' : 'NO',
-      (t.historial || []).length
-    ]);
-
-    const escapar = (v) => `"${String(v).replace(/"/g, '""')}"`;
-    const csv = [encabezados, ...filas]
-      .map(fila => fila.map(escapar).join(','))
-      .join('\n');
-
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    const fecha = new Date().toISOString().slice(0, 10);
-    a.href = url;
-    a.download = `tickets_${fecha}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }
-
-  /* ============ GRÁFICOS ============ */
-  let chartTendencia = null;
-  let chartPrioridad = null;
-
-  const COLORES = {
-    accent: '#7c5cff',
-    accent2: '#22d3ee',
-    alta: '#ef4444',
-    media: '#f59e0b',
-    baja: '#10b981'
-  };
-
-  function actualizarGraficos() {
-    actualizarTendencia();
-    actualizarPrioridad();
-  }
-
-  function actualizarTendencia() {
-    const canvas = document.getElementById('chartTendencia');
-    if (!canvas || typeof Chart === 'undefined') return;
-
-    const labels = [];
-    const valores = [];
-
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      labels.push(d.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric' }));
-      valores.push(
-        tickets.filter(t => new Date(t.fechaCreacion).toDateString() === d.toDateString()).length
-      );
-    }
-
-    const textColor = document.body.classList.contains('light') ? '#6a6a74' : '#5a5a64';
-    const gridColor = document.body.classList.contains('light')
-      ? 'rgba(0,0,0,0.06)'
-      : 'rgba(255,255,255,0.04)';
-
-    const data = {
-      labels,
-      datasets: [{
-        label: 'Tickets creados',
-        data: valores,
-        borderColor: COLORES.accent,
-        backgroundColor: (ctx) => {
-          const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, 220);
-          gradient.addColorStop(0, 'rgba(124, 92, 255, 0.4)');
-          gradient.addColorStop(1, 'rgba(124, 92, 255, 0)');
-          return gradient;
-        },
-        borderWidth: 2,
-        fill: true,
-        tension: 0.4,
-        pointBackgroundColor: COLORES.accent,
-        pointBorderColor: '#fff',
-        pointBorderWidth: 2,
-        pointRadius: 4,
-        pointHoverRadius: 6
-      }]
-    };
-
-    if (chartTendencia) {
-      chartTendencia.data = data;
-      chartTendencia.options.scales.y.ticks.color = textColor;
-      chartTendencia.options.scales.x.ticks.color = textColor;
-      chartTendencia.options.scales.y.grid.color = gridColor;
-      chartTendencia.update();
-      return;
-    }
-
-    chartTendencia = new Chart(canvas, {
-      type: 'line',
-      data,
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: 'rgba(15, 15, 22, 0.95)',
-            borderColor: 'rgba(124, 92, 255, 0.3)',
-            borderWidth: 1,
-            padding: 10,
-            titleColor: '#f5f5f7',
-            bodyColor: '#8a8a94',
-            displayColors: false
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              color: textColor,
-              font: { size: 11 },
-              stepSize: 1,
-              precision: 0
-            },
-            grid: { color: gridColor }
-          },
-          x: {
-            ticks: { color: textColor, font: { size: 11 } },
-            grid: { display: false }
-          }
-        }
-      }
-    });
-  }
-
-  function actualizarPrioridad() {
-    const canvas = document.getElementById('chartPrioridad');
-    if (!canvas || typeof Chart === 'undefined') return;
-
-    const alta = tickets.filter(t => t.prioridad === 'alta').length;
-    const media = tickets.filter(t => t.prioridad === 'media').length;
-    const baja = tickets.filter(t => t.prioridad === 'baja').length;
-
-    const textColor = document.body.classList.contains('light') ? '#6a6a74' : '#8a8a94';
-
-    const data = {
-      labels: ['Alta', 'Media', 'Baja'],
-      datasets: [{
-        data: [alta, media, baja],
-        backgroundColor: [COLORES.alta, COLORES.media, COLORES.baja],
-        borderWidth: 0,
-        hoverOffset: 6
-      }]
-    };
-
-    if (chartPrioridad) {
-      chartPrioridad.data = data;
-      chartPrioridad.options.plugins.legend.labels.color = textColor;
-      chartPrioridad.update();
-      return;
-    }
-
-    chartPrioridad = new Chart(canvas, {
-      type: 'doughnut',
-      data,
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: '68%',
-        plugins: {
-          legend: {
-            position: 'bottom',
-            labels: {
-              color: textColor,
-              font: { size: 12, family: 'Inter' },
-              padding: 14,
-              usePointStyle: true,
-              pointStyle: 'circle',
-              boxWidth: 8,
-              boxHeight: 8
-            }
-          },
-          tooltip: {
-            backgroundColor: 'rgba(15, 15, 22, 0.95)',
-            borderColor: 'rgba(124, 92, 255, 0.3)',
-            borderWidth: 1,
-            padding: 10,
-            titleColor: '#f5f5f7',
-            bodyColor: '#8a8a94'
-          }
-        }
-      }
-    });
-  }
-
-  /* ============ NOTIFICACIONES ============ */
-  function activarNotificaciones() {
-    if (!('Notification' in window)) {
-      alert('Tu navegador no soporta notificaciones');
-      return;
-    }
-
-    if (Notification.permission === 'granted') {
-      alert('Las notificaciones ya están activadas ✅');
-      return;
-    }
-
-    Notification.requestPermission().then(perm => {
-      const btn = document.getElementById('btnNotif');
-      if (perm === 'granted') {
-        btn.classList.add('activo');
-        new Notification('Notificaciones activadas', {
-          body: 'Recibirás alertas de tickets de alta prioridad.',
-          icon: 'icon-192.png'
-        });
-      } else {
-        btn.textContent = '🔕';
-      }
-    });
-  }
-
-  function notificarAltaPrioridad(ticket) {
-    if (!('Notification' in window)) return;
-    if (Notification.permission !== 'granted') return;
-
-    new Notification('🚨 Ticket de alta prioridad', {
-      body: `${ticket.titulo}\nSolicitante: ${ticket.solicitante}`,
-      icon: 'icon-192.png',
-      tag: 'ticket-' + ticket.id,
-      requireInteraction: true
-    });
-  }
-
-  /* ============ TOGGLE TEMA ============ */
-  function toggleTema() {
-    document.body.classList.toggle('light');
-    const esClaro = document.body.classList.contains('light');
-    document.getElementById('btnTema').textContent = esClaro ? '☀️' : '🌙';
-    localStorage.setItem('tema', esClaro ? 'light' : 'dark');
-
-    if (chartTendencia) { chartTendencia.destroy(); chartTendencia = null; }
-    if (chartPrioridad) { chartPrioridad.destroy(); chartPrioridad = null; }
-    actualizarGraficos();
-  }
-
-  /* ============ MODAL DE DETALLE ============ */
-  let ticketAbiertoId = null;
-
-  function abrirTicket(id) {
-    const t = tickets.find(x => x.id === id);
-    if (!t) return;
-    ticketAbiertoId = id;
-
-    const vencido = estaVencido(t);
-    const historial = (t.historial || []).slice().reverse();
-
-    const overlay = document.createElement('div');
-    overlay.className = 'ticket-modal-overlay activo';
-    overlay.onclick = (e) => { if (e.target === overlay) cerrarTicketModal(); };
-
-    overlay.innerHTML = `
-      <div class="ticket-modal">
-        <div class="ticket-modal-head">
-          <div style="flex:1">
-            <h2>${escapeHtml(t.titulo)}</h2>
-            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
-              ${vencido ? '<span class="badge badge-vencido">⚠ VENCIDO</span>' : ''}
-              <span class="badge ${t.estado}">${t.estado.toUpperCase()}</span>
-              <span class="badge ${t.prioridad}">${t.prioridad.toUpperCase()}</span>
-            </div>
-          </div>
-          <button class="ticket-modal-close" onclick="cerrarTicketModal()">✕</button>
-        </div>
-
-        <div class="ticket-modal-meta">
-          <span>👤 ${escapeHtml(t.solicitante)}</span>
-          <span>⚡ SLA ${SLA[t.prioridad]}h</span>
-          <span>🕒 ${t.fecha}</span>
-          ${t.fechaCierre ? `<span>✅ Cerrado: ${new Date(t.fechaCierre).toLocaleString('es-CO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : ''}
-        </div>
-
-        ${t.descripcion ? `
-          <div class="ticket-modal-desc">${escapeHtml(t.descripcion)}</div>
-        ` : ''}
-
-        <div class="ticket-modal-actions">
-          <button class="btn btn-ghost" onclick="cambiarEstado(${t.id}); abrirTicket(${t.id});">
-            Cambiar estado (${t.estado === 'abierto' ? '→ proceso' : t.estado === 'proceso' ? '→ cerrado' : '→ abierto'})
-          </button>
-          <button class="btn btn-ghost" onclick="eliminarDesdeModal(${t.id})">
-            Eliminar
-          </button>
-        </div>
-
-        <div class="timeline-title">
-          <span>📝 Historial de actividad</span>
-          <span style="color:var(--text-dim); font-weight:400; text-transform:none; letter-spacing:0;">(${historial.length})</span>
-        </div>
-
-        <div class="timeline">
-          ${historial.length === 0 
-            ? '<div class="timeline-item creacion"><div class="timeline-item-texto" style="color:var(--text-dim);">Sin actividad registrada</div></div>'
-            : historial.map(h => `
-                <div class="timeline-item ${h.tipo}">
-                  <div class="timeline-item-head">
-                    <span class="timeline-item-autor">${escapeHtml(h.autor)}</span>
-                    <span class="timeline-item-fecha">${h.fecha}</span>
-                  </div>
-                  <div class="timeline-item-texto">${escapeHtml(h.texto)}</div>
-                </div>
-              `).join('')
-          }
-        </div>
-
-        ${t.estado !== 'cerrado' ? `
-          <div class="comment-form">
-            <input id="comentAutor" placeholder="Tu nombre" autocomplete="off" value="${escapeHtml(localStorage.getItem('autorDefault') || '')}" />
-            <textarea id="comentTexto" placeholder="Escribe un comentario o actualización..."></textarea>
-            <button class="btn btn-primary" onclick="agregarComentario(${t.id})">
-              Agregar comentario →
-            </button>
-          </div>
-        ` : `
-          <div class="comment-form" style="text-align:center; padding: 16px; color: var(--text-dim); font-size: 13px;">
-            🔒 Este ticket está cerrado. Cambia el estado para agregar comentarios.
-          </div>
-        `}
-      </div>
-    `;
-
-    document.body.appendChild(overlay);
-    setTimeout(() => {
-      document.getElementById('comentAutor')?.focus();
-    }, 100);
-  }
-
-  function cerrarTicketModal() {
-    const overlay = document.querySelector('.ticket-modal-overlay');
-    if (overlay) overlay.remove();
-    ticketAbiertoId = null;
-  }
-
-  function eliminarDesdeModal(id) {
-    if (!confirm('¿Eliminar este ticket?')) return;
-    tickets = tickets.filter(x => x.id !== id);
-    guardar();
-    cerrarTicketModal();
-    render();
-  }
-
-  function agregarComentario(id) {
-    const t = tickets.find(x => x.id === id);
-    if (!t) return;
-
-    const autorInput = document.getElementById('comentAutor');
-    const textoInput = document.getElementById('comentTexto');
-    const autor = autorInput.value.trim();
-    const texto = textoInput.value.trim();
-
-    if (!autor) {
-      alert('Por favor escribe tu nombre');
-      autorInput.focus();
-      return;
-    }
-    if (!texto) {
-      alert('El comentario no puede estar vacío');
-      textoInput.focus();
-      return;
-    }
-
-    if (!t.historial) t.historial = [];
-
-    const ahora = new Date();
-    t.historial.push({
-      tipo: 'comentario',
-      autor,
-      texto,
-      fecha: ahora.toLocaleString('es-CO', {
-        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
-      }),
-      timestamp: ahora.toISOString()
-    });
-
-    localStorage.setItem('autorDefault', autor);
-    guardar();
-    render();
-
-    abrirTicket(id);
-  }
-
-  /* ============ REPORTE PDF ============ */
-  function generarReportePDF() {
-    if (tickets.length === 0) {
-      alert('No hay tickets para generar el reporte');
-      return;
-    }
-
-    const total = tickets.length;
-    const abiertos = tickets.filter(t => t.estado === 'abierto').length;
-    const proceso = tickets.filter(t => t.estado === 'proceso').length;
-    const cerrados = tickets.filter(t => t.estado === 'cerrado').length;
-    const vencidos = tickets.filter(estaVencido).length;
-    const pct = total ? Math.round((cerrados / total) * 100) : 0;
-
-    const alta = tickets.filter(t => t.prioridad === 'alta').length;
-    const media = tickets.filter(t => t.prioridad === 'media').length;
-    const baja = tickets.filter(t => t.prioridad === 'baja').length;
-
-    const cerradosConTiempo = tickets.filter(t => t.fechaCierre && t.fechaCreacion);
-    let tiempoProm = '—';
-    if (cerradosConTiempo.length) {
-      const sumaMs = cerradosConTiempo.reduce((acc, t) => {
-        return acc + (new Date(t.fechaCierre) - new Date(t.fechaCreacion));
-      }, 0);
-      tiempoProm = formatearDuracion(sumaMs / cerradosConTiempo.length);
-    }
-
-    const recientes = [...tickets]
-      .sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion))
-      .slice(0, 10);
-
-    const vencidosList = tickets.filter(estaVencido).slice(0, 10);
-
-    const fechaHoy = new Date().toLocaleString('es-CO', {
-      day: '2-digit', month: 'long', year: 'numeric',
-      hour: '2-digit', minute: '2-digit'
-    });
-
-    const html = `
-      <div class="pdf-header">
-        <div class="pdf-header-left">
-          <div class="pdf-logo">🎫</div>
-          <div>
-            <h2>Mesa de Ayuda</h2>
-            <p>Reporte ejecutivo de tickets</p>
-          </div>
-        </div>
-        <div class="pdf-fecha">
-          Generado<br><b>${fechaHoy}</b>
-        </div>
-      </div>
-
-      <div class="pdf-section-title">Resumen ejecutivo</div>
-      <div class="pdf-kpis">
-        <div class="pdf-kpi">
-          <div class="pdf-kpi-label">Total</div>
-          <div class="pdf-kpi-value">${total}</div>
-        </div>
-        <div class="pdf-kpi">
-          <div class="pdf-kpi-label">Abiertos</div>
-          <div class="pdf-kpi-value">${abiertos}</div>
-        </div>
-        <div class="pdf-kpi">
-          <div class="pdf-kpi-label">En proceso</div>
-          <div class="pdf-kpi-value">${proceso}</div>
-        </div>
-        <div class="pdf-kpi">
-          <div class="pdf-kpi-label">Cerrados</div>
-          <div class="pdf-kpi-value">${cerrados}</div>
-        </div>
-        <div class="pdf-kpi danger">
-          <div class="pdf-kpi-label">Vencidos</div>
-          <div class="pdf-kpi-value">${vencidos}</div>
-        </div>
-      </div>
-
-      <div class="pdf-two-col">
-        <div class="pdf-box">
-          <h4>Distribución por prioridad</h4>
-          <div class="pdf-row"><span>🔴 Alta</span><b>${alta}</b></div>
-          <div class="pdf-row"><span>🟡 Media</span><b>${media}</b></div>
-          <div class="pdf-row"><span>🟢 Baja</span><b>${baja}</b></div>
-        </div>
-        <div class="pdf-box">
-          <h4>Indicadores clave</h4>
-          <div class="pdf-row"><span>Tasa de resolución</span><b>${pct}%</b></div>
-          <div class="pdf-row"><span>Tiempo prom. resolución</span><b>${tiempoProm}</b></div>
-          <div class="pdf-row"><span>Cumplimiento SLA</span><b>${total ? Math.round(((total - vencidos) / total) * 100) : 100}%</b></div>
-        </div>
-      </div>
-
-      <div class="pdf-section-title">Tickets recientes</div>
-      <table class="pdf-table">
-        <thead>
-          <tr>
-            <th>Título</th>
-            <th>Solicitante</th>
-            <th>Prioridad</th>
-            <th>Estado</th>
-            <th>Fecha</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${recientes.map(t => `
-            <tr>
-              <td>${escapeHtml(t.titulo)}</td>
-              <td>${escapeHtml(t.solicitante)}</td>
-              <td><span class="pdf-badge ${t.prioridad}">${t.prioridad.toUpperCase()}</span></td>
-              <td><span class="pdf-badge ${t.estado}">${t.estado.toUpperCase()}</span></td>
-              <td>${t.fecha}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-
-      ${vencidosList.length ? `
-        <div class="pdf-section-title" style="color: #ef4444;">⚠ Tickets vencidos (fuera de SLA)</div>
-        <table class="pdf-table">
-          <thead>
-            <tr>
-              <th>Título</th>
-              <th>Solicitante</th>
-              <th>Prioridad</th>
-              <th>SLA</th>
-              <th>Transcurrido</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${vencidosList.map(t => `
-              <tr>
-                <td>${escapeHtml(t.titulo)}</td>
-                <td>${escapeHtml(t.solicitante)}</td>
-                <td><span class="pdf-badge ${t.prioridad}">${t.prioridad.toUpperCase()}</span></td>
-                <td>${SLA[t.prioridad]}h</td>
-                <td style="color:#ef4444; font-weight:600;">${formatearDuracion(horasTranscurridas(t) * 3600000)}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      ` : ''}
-
-      <div class="pdf-footer">
-        <span>Mesa de Ayuda · Reporte generado automáticamente</span>
-        <span>Página 1 de 1</span>
-      </div>
-    `;
-
-    const overlay = document.createElement('div');
-    overlay.className = 'pdf-overlay activo';
-    overlay.innerHTML = `
-      <div class="pdf-preview">
-        <div id="pdfContent">
-          ${html}
-        </div>
-        <div class="pdf-actions">
-          <button class="pdf-btn pdf-btn-secondary" onclick="cerrarPDF()">Cancelar</button>
-          <button class="pdf-btn pdf-btn-primary" onclick="descargarPDF()">📥 Descargar PDF</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-  }
-
-  function cerrarPDF() {
-    const overlay = document.querySelector('.pdf-overlay');
-    if (overlay) overlay.remove();
-  }
-
-  async function descargarPDF() {
-    const contenido = document.getElementById('pdfContent');
-    if (!contenido) return;
-
-    const btn = document.querySelector('.pdf-btn-primary');
-    const textoOriginal = btn?.textContent;
-    if (btn) {
-      btn.textContent = '⏳ Generando...';
-      btn.disabled = true;
-    }
-
-    try {
-      const canvas = await html2canvas(contenido, {
-        scale: 2,
-        backgroundColor: '#ffffff',
-        useCORS: true,
-        logging: false
-      });
-
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF({
-        unit: 'mm',
-        format: 'a4',
-        orientation: 'portrait'
-      });
-
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pdfWidth - 20;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      let heightLeft = imgHeight;
-      let position = 10;
-      const imgData = canvas.toDataURL('image/png');
-
-      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-      heightLeft -= (pdfHeight - 20);
-
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight + 10;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-        heightLeft -= (pdfHeight - 20);
-      }
-
-      const fecha = new Date().toISOString().slice(0, 10);
-      pdf.save(`reporte_mesa_ayuda_${fecha}.pdf`);
-
-      cerrarPDF();
-    } catch (err) {
-      console.error(err);
-      alert('Hubo un error al generar el PDF. Intenta de nuevo.');
-      if (btn) {
-        btn.textContent = textoOriginal;
-        btn.disabled = false;
-      }
-    }
-  }
-
-  /* ============ INIT ============ */
-  document.addEventListener('DOMContentLoaded', () => {
-    if (localStorage.getItem('tema') === 'light') {
-      document.body.classList.add('light');
-      const btn = document.getElementById('btnTema');
-      if (btn) btn.textContent = '☀️';
-    }
-
-    if ('Notification' in window && Notification.permission === 'granted') {
-      const btn = document.getElementById('btnNotif');
-      if (btn) btn.classList.add('activo');
-    }
-  });
-
-  /* ============ PWA ============ */
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js')
-        .then(() => console.log('✅ Service Worker registrado'))
-        .catch(err => console.warn('⚠ SW no registrado:', err));
-    });
-  }
-
-  function escapeHtml(str) {
-    return String(str).replace(/[&<>"']/g, c => ({
-      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-    }[c]));
-  }
-
-  render();
-
-  setInterval(() => {
-    if (tickets.some(estaVencido)) render();
-  }, 60000);
+  // ⬇⬇⬇ TODO EL JAVASCRIPT IRÁ AQUÍ (Bloque C) ⬇⬇⬇
 </script>
+
 </body>
 </html>
