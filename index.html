@@ -9,7 +9,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Mesa de Ayuda">
-<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -63,6 +62,99 @@
     transition: background 0.3s;
   }
 
+  /* ============ PANTALLA DE LOGIN ============ */
+  .login-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: var(--bg);
+  }
+
+  .login-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 40px 32px;
+    max-width: 400px;
+    width: 100%;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+    position: relative;
+    z-index: 1;
+  }
+
+  .login-logo {
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: grid;
+    place-items: center;
+    font-size: 26px;
+    margin: 0 auto 20px;
+    box-shadow: 0 8px 24px rgba(124, 92, 255, 0.4);
+  }
+
+  .login-card h1 {
+    font-size: 22px;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+  }
+
+  .login-card > p {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13.5px;
+    margin-bottom: 28px;
+  }
+
+  .login-form { display: grid; gap: 14px; }
+
+  .login-form label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+  }
+
+  .login-form button {
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  .login-error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #f87171;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    display: none;
+  }
+  .login-error.activo { display: block; }
+
+  .login-footer {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 12.5px;
+    color: var(--text-dim);
+  }
+
+  /* ============ APP (oculta hasta login) ============ */
+  .app-container {
+    display: none;
+  }
+  .app-container.activo { display: block; }
+
   .container {
     max-width: 880px;
     margin: 0 auto;
@@ -95,26 +187,19 @@
   header h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
   header p { font-size: 13px; color: var(--text-muted); font-weight: 400; }
 
-  .live-dot {
+  .usuario-logueado {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    font-weight: 500;
+    gap: 8px;
+    font-size: 12px;
     color: var(--text-muted);
     padding: 6px 12px;
     border-radius: 100px;
     border: 1px solid var(--border);
-    background: rgba(16, 185, 129, 0.06);
+    background: var(--surface);
     flex-shrink: 0;
   }
-  .live-dot span {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--success);
-    box-shadow: 0 0 10px var(--success);
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .usuario-logueado b { color: var(--text); font-weight: 500; }
 
   .btn-icon {
     width: 36px; height: 36px;
@@ -435,6 +520,11 @@
   .btn-primary:hover {
     transform: translateY(-1px);
     box-shadow: 0 12px 32px rgba(124, 92, 255, 0.45);
+  }
+  .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
   }
   .btn-ghost {
     background: rgba(255, 255, 255, 0.04);
@@ -1067,7 +1157,7 @@
     header > div[style*="flex:1"] { min-width: 100%; order: -1; }
     .logo { width: 38px; height: 38px; font-size: 17px; border-radius: 12px; }
     .btn-icon { width: 34px; height: 34px; font-size: 14px; }
-    .live-dot { padding: 5px 10px; font-size: 10px; }
+    .usuario-logueado { font-size: 11px; padding: 5px 10px; }
     .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
     .kpi { padding: 14px; }
     .kpi-label { font-size: 10px; letter-spacing: 0.05em; }
@@ -1154,6 +1244,38 @@
 </head>
 <body>
 
+<!-- ============ PANTALLA DE LOGIN ============ -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">🎫</div>
+    <h1>Mesa de Ayuda</h1>
+    <p>Inicia sesión para continuar</p>
+
+    <form class="login-form" onsubmit="event.preventDefault(); hacerLogin();">
+      <div>
+        <label>Correo electrónico</label>
+        <input id="loginEmail" type="email" placeholder="tu@empresa.com" autocomplete="email" required />
+      </div>
+      <div>
+        <label>Contraseña</label>
+        <input id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password" required />
+      </div>
+
+      <div class="login-error" id="loginError"></div>
+
+      <button type="submit" class="btn btn-primary" id="loginBtn">
+        Iniciar sesión →
+      </button>
+    </form>
+
+    <div class="login-footer">
+      ¿No tienes cuenta? Contacta al administrador.
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div class="app-container" id="appContainer">
 <div class="container">
   <header>
     <div class="logo">🎫</div>
@@ -1161,12 +1283,13 @@
       <h1>Mesa de Ayuda</h1>
       <p>Panel de control y gestión de tickets</p>
     </div>
+    <div class="usuario-logueado" id="usuarioLogueado">
+      <span>👤</span> <b id="nombreUsuario">—</b>
+    </div>
     <button class="btn-icon" id="btnNotif" title="Activar notificaciones" onclick="activarNotificaciones()">🔔</button>
     <button class="btn-icon" id="btnTema" title="Cambiar tema" onclick="toggleTema()">🌙</button>
     <button class="btn-icon" id="btnPDF" title="Generar reporte PDF" onclick="generarReportePDF()">📄</button>
-    <div class="live-dot" title="Datos en vivo">
-      <span></span> Live
-    </div>
+    <button class="btn-icon" id="btnSalir" title="Cerrar sesión" onclick="cerrarSesion()">🚪</button>
   </header>
 
   <section class="kpi-grid">
@@ -1209,11 +1332,9 @@
         <div><span class="dot low"></span> Baja: <b id="pBaja">0</b></div>
       </div>
     </div>
-
     <div class="progress">
       <div class="progress-bar" id="progressBar"></div>
     </div>
-
     <div class="stats-foot">
       <span>⏱ Tiempo prom. resolución: <b id="tiempoProm">—</b></span>
       <span>📅 Hoy: <b id="ticketsHoy">0</b></span>
@@ -1225,15 +1346,11 @@
   <section class="charts-grid">
     <div class="card chart-card">
       <div class="card-title">📈 Tickets últimos 7 días</div>
-      <div class="chart-wrap">
-        <canvas id="chartTendencia"></canvas>
-      </div>
+      <div class="chart-wrap"><canvas id="chartTendencia"></canvas></div>
     </div>
     <div class="card chart-card">
       <div class="card-title">🍩 Distribución por prioridad</div>
-      <div class="chart-wrap chart-donut">
-        <canvas id="chartPrioridad"></canvas>
-      </div>
+      <div class="chart-wrap chart-donut"><canvas id="chartPrioridad"></canvas></div>
     </div>
   </section>
 
@@ -1272,24 +1389,18 @@
         <button class="btn btn-ghost" onclick="exportarCSV()">📥 Exportar CSV</button>
       </div>
     </div>
-
     <div class="search-wrap">
       <span class="search-icon">🔍</span>
       <input id="buscador" placeholder="Buscar por título, solicitante o correo..." oninput="render()" />
     </div>
-
     <div class="filtros">
       <button class="chip active" data-filtro="todos" onclick="filtrar('todos', this)">Todos</button>
       <button class="chip" data-filtro="abierto" onclick="filtrar('abierto', this)">Abiertos</button>
       <button class="chip" data-filtro="proceso" onclick="filtrar('proceso', this)">En proceso</button>
       <button class="chip" data-filtro="cerrado" onclick="filtrar('cerrado', this)">Cerrados</button>
     </div>
-
     <div id="listaTickets" class="tickets-list">
-      <div class="loading">
-        <div class="spinner"></div>
-        Cargando tickets...
-      </div>
+      <div class="loading"><div class="spinner"></div>Cargando tickets...</div>
     </div>
   </section>
 
@@ -1300,19 +1411,15 @@
         <button class="btn btn-ghost" onclick="abrirModalUsuarioNuevo()">➕ Nuevo usuario</button>
       </div>
     </div>
-
     <div class="search-wrap">
       <span class="search-icon">🔍</span>
       <input id="buscadorUsuarios" placeholder="Buscar por nombre, correo, cargo o área..." oninput="renderUsuarios()" />
     </div>
-
     <div id="listaUsuarios" class="usuarios-list">
-      <div class="loading">
-        <div class="spinner"></div>
-        Cargando usuarios...
-      </div>
+      <div class="loading"><div class="spinner"></div>Cargando usuarios...</div>
     </div>
   </section>
+</div>
 </div>
 
 <script>
@@ -1325,6 +1432,8 @@
   let usuarios = [];
   let filtroActual = 'todos';
   let usuarioSeleccionado = null;
+  let usuarioActual = null;
+  let perfilActual = null;
 
   const SLA = { alta: 4, media: 24, baja: 72 };
   const ORDEN_PRIORIDAD = { alta: 1, media: 2, baja: 3 };
@@ -1361,6 +1470,75 @@
     return horasTranscurridas(t) > SLA[t.prioridad];
   }
 
+  /* ============================================
+     LOGIN / LOGOUT
+     ============================================ */
+  async function hacerLogin() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const btn = document.getElementById('loginBtn');
+    const error = document.getElementById('loginError');
+
+    error.classList.remove('activo');
+    btn.disabled = true;
+    btn.textContent = '⏳ Entrando...';
+
+    const { data, error: err } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (err) {
+      error.textContent = '❌ ' + (err.message === 'Invalid login credentials' 
+        ? 'Correo o contraseña incorrectos' 
+        : err.message);
+      error.classList.add('activo');
+      btn.disabled = false;
+      btn.textContent = 'Iniciar sesión →';
+      return;
+    }
+
+    usuarioActual = data.user;
+    await cargarPerfilYEntrar();
+  }
+
+  async function cargarPerfilYEntrar() {
+    // Cargar perfil del usuario
+    const { data: perfil } = await supabase
+      .from('perfiles')
+      .select('*')
+      .eq('id', usuarioActual.id)
+      .single();
+
+    perfilActual = perfil;
+
+    // Actualizar UI
+    document.getElementById('nombreUsuario').textContent = 
+      perfil?.nombre || usuarioActual.email;
+    
+    // Ocultar login, mostrar app
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appContainer').classList.add('activo');
+
+    // Cargar datos
+    await cargarTodo();
+  }
+
+  async function cerrarSesion() {
+    if (!confirm('¿Cerrar sesión?')) return;
+    await supabase.auth.signOut();
+    location.reload();
+  }
+
+  async function verificarSesion() {
+    const { data } = await supabase.auth.getSession();
+    if (data.session) {
+      usuarioActual = data.session.user;
+      await cargarPerfilYEntrar();
+    }
+    // Si no hay sesión, queda la pantalla de login visible
+  }
+
+  /* ============================================
+     CARGAR DATOS
+     ============================================ */
   async function cargarTodo() {
     await Promise.all([cargarTickets(), cargarUsuarios()]);
   }
@@ -1399,6 +1577,9 @@
     document.getElementById('totalUsuarios').textContent = usuarios.length;
   }
 
+  /* ============================================
+     AUTOCOMPLETE USUARIOS
+     ============================================ */
   function buscarUsuario() {
     const query = document.getElementById('buscadorUsuario').value.toLowerCase().trim();
     if (!query) { mostrarAutocomplete(usuarios.slice(0, 8)); return; }
@@ -1470,18 +1651,21 @@
     }
   });
 
+  /* ============================================
+     CREAR TICKET
+     ============================================ */
   async function crearTicket() {
     const titulo = document.getElementById('titulo').value.trim();
     const descripcion = document.getElementById('descripcion').value.trim();
     const prioridad = document.getElementById('prioridad').value;
 
-    if (!usuarioSeleccionado) { alert('Debes seleccionar un solicitante del directorio'); document.getElementById('buscadorUsuario').focus(); return; }
+    if (!usuarioSeleccionado) { alert('Debes seleccionar un solicitante'); document.getElementById('buscadorUsuario').focus(); return; }
     if (!titulo) { alert('El título es obligatorio'); document.getElementById('titulo').focus(); return; }
 
     const ahora = new Date().toISOString();
     const historialInicial = [{
       tipo: 'creacion',
-      autor: usuarioSeleccionado.nombre,
+      autor: perfilActual?.nombre || usuarioActual.email,
       texto: `Ticket creado con prioridad ${prioridad.toUpperCase()}`,
       fecha: formatearFecha(ahora),
       timestamp: ahora
@@ -1498,13 +1682,14 @@
 
     if (error) { console.error(error); alert('Error al crear el ticket: ' + error.message); return; }
 
+    const solicitanteNombre = usuarioSeleccionado.nombre;
     document.getElementById('titulo').value = '';
     document.getElementById('descripcion').value = '';
     document.getElementById('prioridad').value = 'media';
     limpiarUsuarioSeleccionado();
 
     if (prioridad === 'alta') {
-      notificarAltaPrioridad({ titulo, solicitante: usuarioSeleccionado.nombre });
+      notificarAltaPrioridad({ titulo, solicitante: solicitanteNombre });
     }
 
     await cargarTickets();
@@ -1520,7 +1705,13 @@
     else { nuevoEstado = 'abierto'; textoCambio = 'Estado: CERRADO → ABIERTO (reabierto)'; }
 
     const historialActual = Array.isArray(t.historial) ? t.historial.slice() : [];
-    historialActual.push({ tipo: 'estado', autor: 'Sistema', texto: textoCambio, fecha: formatearFecha(ahora), timestamp: ahora });
+    historialActual.push({ 
+      tipo: 'estado', 
+      autor: perfilActual?.nombre || 'Sistema',
+      texto: textoCambio, 
+      fecha: formatearFecha(ahora), 
+      timestamp: ahora 
+    });
 
     const { error } = await supabase.from('tickets').update({
       estado: nuevoEstado,
@@ -1528,7 +1719,7 @@
       historial: historialActual
     }).eq('id', id);
 
-    if (error) { console.error(error); alert('Error al actualizar el ticket'); return; }
+    if (error) { console.error(error); alert('Error al actualizar'); return; }
     await cargarTickets();
   }
 
@@ -1546,6 +1737,9 @@
     render();
   }
 
+  /* ============================================
+     KPIs
+     ============================================ */
   function calcularKPIs() {
     const total = tickets.length;
     const abiertos = tickets.filter(t => t.estado === 'abierto').length;
@@ -1587,6 +1781,9 @@
     document.getElementById('altaCritica').textContent = altaCritica;
   }
 
+  /* ============================================
+     RENDER
+     ============================================ */
   function render() {
     const lista = document.getElementById('listaTickets');
     const query = (document.getElementById('buscador')?.value || '').toLowerCase().trim();
@@ -1707,7 +1904,7 @@
         <div class="modal-head">
           <div style="flex:1">
             <h2>${esEdicion ? '✏️ Editar usuario' : '➕ Nuevo usuario'}</h2>
-            <p style="font-size:12.5px; color:var(--text-muted);">${esEdicion ? 'Actualiza los datos del usuario' : 'Agrega un nuevo usuario al directorio'}</p>
+            <p style="font-size:12.5px; color:var(--text-muted);">${esEdicion ? 'Actualiza los datos' : 'Agrega al directorio'}</p>
           </div>
           <button class="modal-close" onclick="cerrarModalUsuario()">✕</button>
         </div>
@@ -1768,7 +1965,7 @@
 
     if (error) {
       console.error(error);
-      if (error.code === '23505') alert('Ya existe un usuario con ese correo electrónico');
+      if (error.code === '23505') alert('Ya existe un usuario con ese correo');
       else alert('Error al guardar: ' + error.message);
       return;
     }
@@ -1787,7 +1984,7 @@
     if (!u) return;
     const ticketsDelUsuario = tickets.filter(t => t.usuario_id === id).length;
     let msg = `¿Eliminar a "${u.nombre}" del directorio?`;
-    if (ticketsDelUsuario > 0) msg += `\n\nEste usuario tiene ${ticketsDelUsuario} ticket(s) asociado(s). Los tickets se mantendrán pero se desvincularán.`;
+    if (ticketsDelUsuario > 0) msg += `\n\nTiene ${ticketsDelUsuario} ticket(s) asociado(s). Se desvincularán.`;
     if (!confirm(msg)) return;
 
     const { error } = await supabase.from('usuarios').delete().eq('id', id);
@@ -1819,7 +2016,6 @@
           </div>
           <button class="modal-close" onclick="cerrarTicketModal()">✕</button>
         </div>
-
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px; font-size:12.5px;">
           <div>
             <div style="color:var(--text-dim); font-size:11px; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Solicitante</div>
@@ -1839,22 +2035,18 @@
           </div>
           ${t.fecha_cierre ? `<div><div style="color:var(--text-dim); font-size:11px; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Cerrado</div><div style="color:var(--text);">✅ ${formatearFecha(t.fecha_cierre)}</div></div>` : ''}
         </div>
-
         ${t.descripcion ? `<div style="background: rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px 16px; font-size:13.5px; color:var(--text-muted); line-height:1.6; margin-bottom:20px; word-break:break-word;">${escapeHtml(t.descripcion)}</div>` : ''}
-
         <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px;">
           <button class="btn btn-ghost" onclick="cambiarEstado(${t.id}).then(() => { cerrarTicketModal(); abrirTicket(${t.id}); })">Cambiar estado</button>
-          <button class="btn btn-ghost" onclick="if(confirm('¿Eliminar este ticket?')) { eliminar(${t.id}).then(() => cerrarTicketModal()); }">Eliminar</button>
+          <button class="btn btn-ghost" onclick="if(confirm('¿Eliminar?')) { eliminar(${t.id}).then(() => cerrarTicketModal()); }">Eliminar</button>
         </div>
-
         <div class="timeline-title">
           <span>📝 Historial de actividad</span>
           <span style="color:var(--text-dim); font-weight:400; text-transform:none; letter-spacing:0;">(${historial.length})</span>
         </div>
-
         <div class="timeline">
           ${historial.length === 0 
-            ? '<div class="timeline-item creacion"><div class="timeline-item-texto" style="color:var(--text-dim);">Sin actividad registrada</div></div>'
+            ? '<div class="timeline-item creacion"><div class="timeline-item-texto" style="color:var(--text-dim);">Sin actividad</div></div>'
             : historial.map(h => `
                 <div class="timeline-item ${h.tipo}">
                   <div class="timeline-item-head">
@@ -1866,18 +2058,16 @@
               `).join('')
           }
         </div>
-
         ${t.estado !== 'cerrado' ? `
           <div class="comment-form">
-            <input id="comentAutor" placeholder="Tu nombre" autocomplete="off" value="${escapeHtml(localStorage.getItem('autorDefault') || '')}" />
-            <textarea id="comentTexto" placeholder="Escribe un comentario o actualización..."></textarea>
+            <textarea id="comentTexto" placeholder="Escribe un comentario..."></textarea>
             <button class="btn btn-primary" onclick="agregarComentario(${t.id})">Agregar comentario →</button>
           </div>
-        ` : `<div class="comment-form" style="text-align:center; padding: 16px; color: var(--text-dim); font-size: 13px;">🔒 Este ticket está cerrado. Cambia el estado para agregar comentarios.</div>`}
+        ` : `<div class="comment-form" style="text-align:center; padding: 16px; color: var(--text-dim); font-size: 13px;">🔒 Ticket cerrado. Cambia el estado para comentar.</div>`}
       </div>
     `;
     document.body.appendChild(overlay);
-    setTimeout(() => document.getElementById('comentAutor')?.focus(), 100);
+    setTimeout(() => document.getElementById('comentTexto')?.focus(), 100);
   }
 
   function cerrarTicketModal() {
@@ -1887,27 +2077,30 @@
   async function agregarComentario(id) {
     const t = tickets.find(x => x.id === id);
     if (!t) return;
-    const autorInput = document.getElementById('comentAutor');
     const textoInput = document.getElementById('comentTexto');
-    const autor = autorInput.value.trim();
     const texto = textoInput.value.trim();
-
-    if (!autor) { alert('Por favor escribe tu nombre'); autorInput.focus(); return; }
     if (!texto) { alert('El comentario no puede estar vacío'); textoInput.focus(); return; }
 
     const ahora = new Date().toISOString();
     const historialActual = Array.isArray(t.historial) ? t.historial.slice() : [];
-    historialActual.push({ tipo: 'comentario', autor, texto, fecha: formatearFecha(ahora), timestamp: ahora });
+    historialActual.push({ 
+      tipo: 'comentario', 
+      autor: perfilActual?.nombre || usuarioActual.email,
+      texto, 
+      fecha: formatearFecha(ahora), 
+      timestamp: ahora 
+    });
 
     const { error } = await supabase.from('tickets').update({ historial: historialActual }).eq('id', id);
-    if (error) { console.error(error); alert('Error al guardar el comentario'); return; }
-
-    localStorage.setItem('autorDefault', autor);
+    if (error) { console.error(error); alert('Error al guardar'); return; }
     await cargarTickets();
     cerrarTicketModal();
     abrirTicket(id);
   }
 
+  /* ============================================
+     GRÁFICOS
+     ============================================ */
   let chartTendencia = null;
   let chartPrioridad = null;
   const COLORES = { accent: '#7c5cff', accent2: '#22d3ee', alta: '#ef4444', media: '#f59e0b', baja: '#10b981' };
@@ -1999,6 +2192,9 @@
     });
   }
 
+  /* ============================================
+     NOTIFICACIONES Y TEMA
+     ============================================ */
   function activarNotificaciones() {
     if (!('Notification' in window)) { alert('Tu navegador no soporta notificaciones'); return; }
     if (Notification.permission === 'granted') { alert('Las notificaciones ya están activadas ✅'); return; }
@@ -2006,7 +2202,7 @@
       const btn = document.getElementById('btnNotif');
       if (perm === 'granted') {
         btn.classList.add('activo');
-        new Notification('Notificaciones activadas', { body: 'Recibirás alertas de tickets de alta prioridad.', icon: 'icon-192.png' });
+        new Notification('Notificaciones activadas', { body: 'Recibirás alertas de tickets críticos.' });
       } else { btn.textContent = '🔕'; }
     });
   }
@@ -2016,7 +2212,7 @@
     if (Notification.permission !== 'granted') return;
     new Notification('🚨 Ticket de alta prioridad', {
       body: `${ticket.titulo}\nSolicitante: ${ticket.solicitante}`,
-      icon: 'icon-192.png', tag: 'ticket-' + Date.now(), requireInteraction: true
+      tag: 'ticket-' + Date.now(), requireInteraction: true
     });
   }
 
@@ -2030,8 +2226,11 @@
     actualizarGraficos();
   }
 
+  /* ============================================
+     EXPORTAR CSV
+     ============================================ */
   function exportarCSV() {
-    if (tickets.length === 0) { alert('No hay tickets para exportar'); return; }
+    if (tickets.length === 0) { alert('No hay tickets'); return; }
     const encabezados = ['ID', 'Título', 'Descripción', 'Solicitante', 'Correo', 'Teléfono', 'Cargo', 'Área', 'Prioridad', 'Estado', 'Fecha creación', 'Fecha cierre', 'Vencido', 'Actividad'];
     const filas = tickets.map(t => {
       const u = t.usuario_id ? usuarios.find(x => x.id === t.usuario_id) : null;
@@ -2054,8 +2253,11 @@
     URL.revokeObjectURL(url);
   }
 
+  /* ============================================
+     REPORTE PDF
+     ============================================ */
   function generarReportePDF() {
-    if (tickets.length === 0) { alert('No hay tickets para generar el reporte'); return; }
+    if (tickets.length === 0) { alert('No hay tickets'); return; }
     const total = tickets.length;
     const abiertos = tickets.filter(t => t.estado === 'abierto').length;
     const proceso = tickets.filter(t => t.estado === 'proceso').length;
@@ -2065,7 +2267,6 @@
     const alta = tickets.filter(t => t.prioridad === 'alta').length;
     const media = tickets.filter(t => t.prioridad === 'media').length;
     const baja = tickets.filter(t => t.prioridad === 'baja').length;
-
     const cerradosConTiempo = tickets.filter(t => t.fecha_cierre && t.fecha_creacion);
     let tiempoProm = '—';
     if (cerradosConTiempo.length) {
@@ -2121,7 +2322,7 @@
         </tbody>
       </table>
       ${vencidosList.length ? `
-        <div class="pdf-section-title" style="color: #ef4444;">⚠ Tickets vencidos (fuera de SLA)</div>
+        <div class="pdf-section-title" style="color: #ef4444;">⚠ Tickets vencidos</div>
         <table class="pdf-table">
           <thead><tr><th>Título</th><th>Solicitante</th><th>Prioridad</th><th>SLA</th><th>Transcurrido</th></tr></thead>
           <tbody>
@@ -2136,7 +2337,7 @@
           </tbody>
         </table>` : ''}
       <div class="pdf-footer">
-        <span>Mesa de Ayuda · Reporte generado automáticamente</span>
+        <span>Mesa de Ayuda · Reporte automático</span>
         <span>Página 1 de 1</span>
       </div>
     `;
@@ -2199,6 +2400,9 @@
     }
   });
 
+  /* ============================================
+     INIT
+     ============================================ */
   document.addEventListener('DOMContentLoaded', () => {
     if (localStorage.getItem('tema') === 'light') {
       document.body.classList.add('light');
@@ -2209,21 +2413,25 @@
       const btn = document.getElementById('btnNotif');
       if (btn) btn.classList.add('activo');
     }
-    cargarTodo();
+    verificarSesion();
   });
 
+  /* ============================================
+     REALTIME
+     ============================================ */
   supabase
     .channel('realtime-todo')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => {
-      console.log('🔄 Cambio en tickets detectado');
-      cargarTickets();
+      if (usuarioActual) cargarTickets();
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'usuarios' }, () => {
-      console.log('🔄 Cambio en usuarios detectado');
-      cargarUsuarios();
+      if (usuarioActual) cargarUsuarios();
     })
     .subscribe();
 
+  /* ============================================
+     PWA
+     ============================================ */
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js')
@@ -2233,7 +2441,7 @@
   }
 
   setInterval(() => {
-    if (tickets.some(estaVencido)) render();
+    if (usuarioActual && tickets.some(estaVencido)) render();
   }, 60000);
 </script>
 </body>
