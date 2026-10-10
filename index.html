@@ -1493,7 +1493,7 @@
     await cargarPerfilYEntrar();
   }
 
-    async function cargarPerfilYEntrar() {
+  async function cargarPerfilYEntrar() {
     const { data: perfil } = await sb
       .from('perfiles')
       .select('*')
@@ -1530,7 +1530,7 @@
     await Promise.all([cargarTickets(), cargarUsuarios()]);
   }
 
-    async function cargarTickets() {
+  async function cargarTickets() {
     const { data, error } = await sb
       .from('tickets')
       .select('*')
@@ -1549,7 +1549,7 @@
     render();
   }
 
-    async function cargarUsuarios() {
+  async function cargarUsuarios() {
     const { data, error } = await sb
       .from('usuarios')
       .select('*')
@@ -1769,7 +1769,6 @@
 
     let visibles = [...tickets];
 
-    // Filtro "Mis tickets"
     if (filtroActual === 'mios') {
       visibles = visibles.filter(t => 
         perfilActual && t.solicitante === perfilActual.nombre
@@ -1958,7 +1957,6 @@
     if (!nombre) { alert('El nombre es obligatorio'); return; }
     if (!correo) { alert('El correo es obligatorio'); return; }
 
-    // Si es edición: solo actualizar directorio
     if (id) {
       const { error } = await sb.from('usuarios').update({
         nombre, telefono: telefono || null, cargo: cargo || null, area: area || null
@@ -1970,7 +1968,6 @@
       return;
     }
 
-    // Si es nuevo: crear cuenta de login + directorio
     const password = document.getElementById('uPassword').value;
     const rol = document.getElementById('uRol').value;
 
