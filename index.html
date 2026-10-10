@@ -62,7 +62,6 @@
     transition: background 0.3s;
   }
 
-  /* ============ PANTALLA DE LOGIN ============ */
   .login-screen {
     position: fixed;
     inset: 0;
@@ -149,10 +148,7 @@
     color: var(--text-dim);
   }
 
-  /* ============ APP (oculta hasta login) ============ */
-  .app-container {
-    display: none;
-  }
+  .app-container { display: none; }
   .app-container.activo { display: block; }
 
   .container {
@@ -1244,7 +1240,7 @@
 </head>
 <body>
 
-<!-- ============ PANTALLA DE LOGIN ============ -->
+<!-- PANTALLA DE LOGIN -->
 <div class="login-screen" id="loginScreen">
   <div class="login-card">
     <div class="login-logo">🎫</div>
@@ -1274,7 +1270,7 @@
   </div>
 </div>
 
-<!-- ============ APP ============ -->
+<!-- APP -->
 <div class="app-container" id="appContainer">
 <div class="container">
   <header>
@@ -1395,6 +1391,7 @@
     </div>
     <div class="filtros">
       <button class="chip active" data-filtro="todos" onclick="filtrar('todos', this)">Todos</button>
+      <button class="chip" data-filtro="mios" onclick="filtrar('mios', this)">🎯 Mis tickets</button>
       <button class="chip" data-filtro="abierto" onclick="filtrar('abierto', this)">Abiertos</button>
       <button class="chip" data-filtro="proceso" onclick="filtrar('proceso', this)">En proceso</button>
       <button class="chip" data-filtro="cerrado" onclick="filtrar('cerrado', this)">Cerrados</button>
@@ -1423,7 +1420,6 @@
 </div>
 
 <script>
-  /* CONFIGURACIÓN SUPABASE */
   const SUPABASE_URL = 'https://wzutgcmcjtdnmvcdtlgr.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_llbzE6_fJC3Y4ISBy2ZQIQ_PfE5t4IZ';
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -1470,9 +1466,7 @@
     return horasTranscurridas(t) > SLA[t.prioridad];
   }
 
-  /* ============================================
-     LOGIN / LOGOUT
-     ============================================ */
+  /* LOGIN */
   async function hacerLogin() {
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
@@ -1500,7 +1494,6 @@
   }
 
   async function cargarPerfilYEntrar() {
-    // Cargar perfil del usuario
     const { data: perfil } = await supabase
       .from('perfiles')
       .select('*')
@@ -1509,15 +1502,12 @@
 
     perfilActual = perfil;
 
-    // Actualizar UI
     document.getElementById('nombreUsuario').textContent = 
       perfil?.nombre || usuarioActual.email;
     
-    // Ocultar login, mostrar app
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('appContainer').classList.add('activo');
 
-    // Cargar datos
     await cargarTodo();
   }
 
@@ -1533,12 +1523,9 @@
       usuarioActual = data.session.user;
       await cargarPerfilYEntrar();
     }
-    // Si no hay sesión, queda la pantalla de login visible
   }
 
-  /* ============================================
-     CARGAR DATOS
-     ============================================ */
+  /* CARGAR DATOS */
   async function cargarTodo() {
     await Promise.all([cargarTickets(), cargarUsuarios()]);
   }
@@ -1577,9 +1564,7 @@
     document.getElementById('totalUsuarios').textContent = usuarios.length;
   }
 
-  /* ============================================
-     AUTOCOMPLETE USUARIOS
-     ============================================ */
+  /* AUTOCOMPLETE USUARIOS */
   function buscarUsuario() {
     const query = document.getElementById('buscadorUsuario').value.toLowerCase().trim();
     if (!query) { mostrarAutocomplete(usuarios.slice(0, 8)); return; }
@@ -1651,9 +1636,7 @@
     }
   });
 
-  /* ============================================
-     CREAR TICKET
-     ============================================ */
+  /* CREAR TICKET */
   async function crearTicket() {
     const titulo = document.getElementById('titulo').value.trim();
     const descripcion = document.getElementById('descripcion').value.trim();
@@ -1680,7 +1663,7 @@
       historial: historialInicial
     });
 
-    if (error) { console.error(error); alert('Error al crear el ticket: ' + error.message); return; }
+    if (error) { console.error(error); alert('Error al crear: ' + error.message); return; }
 
     const solicitanteNombre = usuarioSeleccionado.nombre;
     document.getElementById('titulo').value = '';
@@ -1702,7 +1685,7 @@
     let nuevoEstado = '', textoCambio = '';
     if (t.estado === 'abierto') { nuevoEstado = 'proceso'; textoCambio = 'Estado: ABIERTO → EN PROCESO'; }
     else if (t.estado === 'proceso') { nuevoEstado = 'cerrado'; textoCambio = 'Estado: EN PROCESO → CERRADO'; }
-    else { nuevoEstado = 'abierto'; textoCambio = 'Estado: CERRADO → ABIERTO (reabierto)'; }
+    else { nuevoEstado = 'abierto'; textoCambio = 'Estado: CERRADO → ABIERTO'; }
 
     const historialActual = Array.isArray(t.historial) ? t.historial.slice() : [];
     historialActual.push({ 
@@ -1737,9 +1720,7 @@
     render();
   }
 
-  /* ============================================
-     KPIs
-     ============================================ */
+  /* KPIs */
   function calcularKPIs() {
     const total = tickets.length;
     const abiertos = tickets.filter(t => t.estado === 'abierto').length;
@@ -1781,14 +1762,21 @@
     document.getElementById('altaCritica').textContent = altaCritica;
   }
 
-  /* ============================================
-     RENDER
-     ============================================ */
+  /* RENDER */
   function render() {
     const lista = document.getElementById('listaTickets');
     const query = (document.getElementById('buscador')?.value || '').toLowerCase().trim();
 
-    let visibles = filtroActual === 'todos' ? [...tickets] : tickets.filter(t => t.estado === filtroActual);
+    let visibles = [...tickets];
+
+    // Filtro "Mis tickets"
+    if (filtroActual === 'mios') {
+      visibles = visibles.filter(t => 
+        perfilActual && t.solicitante === perfilActual.nombre
+      );
+    } else if (filtroActual !== 'todos') {
+      visibles = visibles.filter(t => t.estado === filtroActual);
+    }
 
     if (query) {
       visibles = visibles.filter(t =>
@@ -1808,7 +1796,8 @@
       lista.innerHTML = `
         <div class="empty">
           <div class="empty-icon">◇</div>
-          ${query ? 'No hay resultados para "' + escapeHtml(query) + '"' : 'No hay tickets para mostrar'}
+          ${query ? 'No hay resultados para "' + escapeHtml(query) + '"' : 
+            filtroActual === 'mios' ? 'No has creado tickets aún' : 'No hay tickets para mostrar'}
         </div>`;
     } else {
       lista.innerHTML = visibles.map(t => {
@@ -1904,7 +1893,7 @@
         <div class="modal-head">
           <div style="flex:1">
             <h2>${esEdicion ? '✏️ Editar usuario' : '➕ Nuevo usuario'}</h2>
-            <p style="font-size:12.5px; color:var(--text-muted);">${esEdicion ? 'Actualiza los datos' : 'Agrega al directorio'}</p>
+            <p style="font-size:12.5px; color:var(--text-muted);">${esEdicion ? 'Actualiza los datos' : 'Crea la cuenta de login + entrada al directorio'}</p>
           </div>
           <button class="modal-close" onclick="cerrarModalUsuario()">✕</button>
         </div>
@@ -1915,8 +1904,22 @@
           </div>
           <div>
             <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.05em;">Correo institucional *</label>
-            <input id="uCorreo" type="email" placeholder="usuario@empresa.com" value="${esEdicion ? escapeHtml(u.correo) : ''}" />
+            <input id="uCorreo" type="email" placeholder="usuario@empresa.com" value="${esEdicion ? escapeHtml(u.correo) : ''}" ${esEdicion ? 'disabled style="opacity:0.6;"' : ''} />
           </div>
+          ${!esEdicion ? `
+          <div>
+            <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.05em;">Contraseña *</label>
+            <input id="uPassword" type="password" placeholder="Mínimo 6 caracteres" />
+          </div>
+          <div>
+            <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.05em;">Rol</label>
+            <select id="uRol">
+              <option value="agente" selected>Agente (atiende tickets)</option>
+              <option value="admin">Administrador (todo)</option>
+              <option value="solicitante">Solicitante (solo sus tickets)</option>
+            </select>
+          </div>
+          ` : ''}
           <div class="form-row">
             <div>
               <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.05em;">Teléfono</label>
@@ -1932,7 +1935,7 @@
             <input id="uArea" placeholder="Ej: Sistemas, Contabilidad..." value="${esEdicion ? escapeHtml(u.area || '') : ''}" />
           </div>
           <button class="btn btn-primary" onclick="guardarUsuario(${esEdicion ? u.id : 'null'})">
-            ${esEdicion ? 'Guardar cambios' : 'Crear usuario'}
+            ${esEdicion ? 'Guardar cambios' : 'Crear usuario y cuenta'}
           </button>
         </div>
       </div>
@@ -1955,25 +1958,45 @@
     if (!nombre) { alert('El nombre es obligatorio'); return; }
     if (!correo) { alert('El correo es obligatorio'); return; }
 
-    const datos = { nombre, correo, telefono: telefono || null, cargo: cargo || null, area: area || null };
-    let error;
+    // Si es edición: solo actualizar directorio
     if (id) {
-      ({ error } = await supabase.from('usuarios').update(datos).eq('id', id));
-    } else {
-      ({ error } = await supabase.from('usuarios').insert(datos));
+      const { error } = await supabase.from('usuarios').update({
+        nombre, telefono: telefono || null, cargo: cargo || null, area: area || null
+      }).eq('id', id);
+
+      if (error) { console.error(error); alert('Error al guardar: ' + error.message); return; }
+      cerrarModalUsuario();
+      await cargarUsuarios();
+      return;
     }
 
-    if (error) {
-      console.error(error);
-      if (error.code === '23505') alert('Ya existe un usuario con ese correo');
-      else alert('Error al guardar: ' + error.message);
+    // Si es nuevo: crear cuenta de login + directorio
+    const password = document.getElementById('uPassword').value;
+    const rol = document.getElementById('uRol').value;
+
+    if (!password || password.length < 6) {
+      alert('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+
+    const btn = document.querySelector('.modal-overlay .btn-primary');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Creando cuenta...'; }
+
+    const { data, error } = await supabase.functions.invoke('crear-usuario', {
+      body: { email: correo, password, nombre, rol, telefono, cargo, area }
+    });
+
+    if (error || data?.error) {
+      console.error(error || data.error);
+      alert('Error al crear usuario: ' + (data?.error || error.message));
+      if (btn) { btn.disabled = false; btn.textContent = 'Crear usuario y cuenta'; }
       return;
     }
 
     cerrarModalUsuario();
-    await cargarUsuarios();
+    await Promise.all([cargarUsuarios(), cargarTickets()]);
 
-    if (!id && usuarioSeleccionado === null) {
+    if (usuarioSeleccionado === null) {
       const nuevo = usuarios.find(x => x.correo === correo);
       if (nuevo) seleccionarUsuario(nuevo.id);
     }
@@ -1984,7 +2007,7 @@
     if (!u) return;
     const ticketsDelUsuario = tickets.filter(t => t.usuario_id === id).length;
     let msg = `¿Eliminar a "${u.nombre}" del directorio?`;
-    if (ticketsDelUsuario > 0) msg += `\n\nTiene ${ticketsDelUsuario} ticket(s) asociado(s). Se desvincularán.`;
+    if (ticketsDelUsuario > 0) msg += `\n\nTiene ${ticketsDelUsuario} ticket(s). Se desvincularán.`;
     if (!confirm(msg)) return;
 
     const { error } = await supabase.from('usuarios').delete().eq('id', id);
@@ -2041,7 +2064,7 @@
           <button class="btn btn-ghost" onclick="if(confirm('¿Eliminar?')) { eliminar(${t.id}).then(() => cerrarTicketModal()); }">Eliminar</button>
         </div>
         <div class="timeline-title">
-          <span>📝 Historial de actividad</span>
+          <span>📝 Historial</span>
           <span style="color:var(--text-dim); font-weight:400; text-transform:none; letter-spacing:0;">(${historial.length})</span>
         </div>
         <div class="timeline">
@@ -2063,7 +2086,7 @@
             <textarea id="comentTexto" placeholder="Escribe un comentario..."></textarea>
             <button class="btn btn-primary" onclick="agregarComentario(${t.id})">Agregar comentario →</button>
           </div>
-        ` : `<div class="comment-form" style="text-align:center; padding: 16px; color: var(--text-dim); font-size: 13px;">🔒 Ticket cerrado. Cambia el estado para comentar.</div>`}
+        ` : `<div class="comment-form" style="text-align:center; padding: 16px; color: var(--text-dim); font-size: 13px;">🔒 Ticket cerrado</div>`}
       </div>
     `;
     document.body.appendChild(overlay);
@@ -2098,9 +2121,7 @@
     abrirTicket(id);
   }
 
-  /* ============================================
-     GRÁFICOS
-     ============================================ */
+  /* GRÁFICOS */
   let chartTendencia = null;
   let chartPrioridad = null;
   const COLORES = { accent: '#7c5cff', accent2: '#22d3ee', alta: '#ef4444', media: '#f59e0b', baja: '#10b981' };
@@ -2125,7 +2146,7 @@
     const data = {
       labels,
       datasets: [{
-        label: 'Tickets creados', data: valores,
+        label: 'Tickets', data: valores,
         borderColor: COLORES.accent,
         backgroundColor: (ctx) => {
           const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 220);
@@ -2192,9 +2213,7 @@
     });
   }
 
-  /* ============================================
-     NOTIFICACIONES Y TEMA
-     ============================================ */
+  /* NOTIFICACIONES Y TEMA */
   function activarNotificaciones() {
     if (!('Notification' in window)) { alert('Tu navegador no soporta notificaciones'); return; }
     if (Notification.permission === 'granted') { alert('Las notificaciones ya están activadas ✅'); return; }
@@ -2226,9 +2245,7 @@
     actualizarGraficos();
   }
 
-  /* ============================================
-     EXPORTAR CSV
-     ============================================ */
+  /* EXPORTAR CSV */
   function exportarCSV() {
     if (tickets.length === 0) { alert('No hay tickets'); return; }
     const encabezados = ['ID', 'Título', 'Descripción', 'Solicitante', 'Correo', 'Teléfono', 'Cargo', 'Área', 'Prioridad', 'Estado', 'Fecha creación', 'Fecha cierre', 'Vencido', 'Actividad'];
@@ -2253,9 +2270,7 @@
     URL.revokeObjectURL(url);
   }
 
-  /* ============================================
-     REPORTE PDF
-     ============================================ */
+  /* REPORTE PDF */
   function generarReportePDF() {
     if (tickets.length === 0) { alert('No hay tickets'); return; }
     const total = tickets.length;
@@ -2281,7 +2296,7 @@
       <div class="pdf-header">
         <div class="pdf-header-left">
           <div class="pdf-logo">🎫</div>
-          <div><h2>Mesa de Ayuda</h2><p>Reporte ejecutivo de tickets</p></div>
+          <div><h2>Mesa de Ayuda</h2><p>Reporte ejecutivo</p></div>
         </div>
         <div class="pdf-fecha">Generado<br><b>${fechaHoy}</b></div>
       </div>
@@ -2400,9 +2415,6 @@
     }
   });
 
-  /* ============================================
-     INIT
-     ============================================ */
   document.addEventListener('DOMContentLoaded', () => {
     if (localStorage.getItem('tema') === 'light') {
       document.body.classList.add('light');
@@ -2416,9 +2428,6 @@
     verificarSesion();
   });
 
-  /* ============================================
-     REALTIME
-     ============================================ */
   supabase
     .channel('realtime-todo')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => {
@@ -2429,9 +2438,6 @@
     })
     .subscribe();
 
-  /* ============================================
-     PWA
-     ============================================ */
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js')
