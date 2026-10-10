@@ -103,13 +103,13 @@ function esRecursoCacheable(url) {
 async function cachearRespuesta(req, response) {
   try {
     const cache = await caches.open(CACHE_NAME);
-    // Clonar antes de guardar
-    const clone = response.clone();
-    await cache.put(req, clone);
+
+    // Clonar la respuesta antes de consumir su contenido
+    await cache.put(req, response.clone());
+
   } catch (err) {
-    // Silenciar error si el request ya no es válido
     if (err.name !== 'InvalidStateError') {
-      throw err;
+      console.warn('⚠ No se pudo cachear:', req.url, err.message);
     }
   }
 }
