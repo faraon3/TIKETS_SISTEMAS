@@ -1422,7 +1422,7 @@
 <script>
   const SUPABASE_URL = 'https://wzutgcmcjtdnmvcdtlgr.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_llbzE6_fJC3Y4ISBy2ZQIQ_PfE5t4IZ';
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   let tickets = [];
   let usuarios = [];
@@ -1477,7 +1477,7 @@
     btn.disabled = true;
     btn.textContent = '⏳ Entrando...';
 
-    const { data, error: err } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error: err } = await sb.auth.signInWithPassword({ email, password });
 
     if (err) {
       error.textContent = '❌ ' + (err.message === 'Invalid login credentials' 
@@ -1513,12 +1513,12 @@
 
   async function cerrarSesion() {
     if (!confirm('¿Cerrar sesión?')) return;
-    await supabase.auth.signOut();
+    await sb.auth.signOut();
     location.reload();
   }
 
   async function verificarSesion() {
-    const { data } = await supabase.auth.getSession();
+    const { data } = await sb.auth.getSession();
     if (data.session) {
       usuarioActual = data.session.user;
       await cargarPerfilYEntrar();
@@ -1654,7 +1654,7 @@
       timestamp: ahora
     }];
 
-    const { error } = await supabase.from('tickets').insert({
+    const { error } = await sb.from('tickets').insert({
       titulo, descripcion,
       solicitante: usuarioSeleccionado.nombre,
       usuario_id: usuarioSeleccionado.id,
@@ -1696,7 +1696,7 @@
       timestamp: ahora 
     });
 
-    const { error } = await supabase.from('tickets').update({
+    const { error } = await sb.from('tickets').update({
       estado: nuevoEstado,
       fecha_cierre: nuevoEstado === 'cerrado' ? ahora : null,
       historial: historialActual
@@ -1708,7 +1708,7 @@
 
   async function eliminar(id) {
     if (!confirm('¿Eliminar este ticket?')) return;
-    const { error } = await supabase.from('tickets').delete().eq('id', id);
+    const { error } = await sb.from('tickets').delete().eq('id', id);
     if (error) { console.error(error); alert('Error al eliminar'); return; }
     await cargarTickets();
   }
@@ -1960,7 +1960,7 @@
 
     // Si es edición: solo actualizar directorio
     if (id) {
-      const { error } = await supabase.from('usuarios').update({
+      const { error } = await sb.from('usuarios').update({
         nombre, telefono: telefono || null, cargo: cargo || null, area: area || null
       }).eq('id', id);
 
@@ -1982,7 +1982,7 @@
     const btn = document.querySelector('.modal-overlay .btn-primary');
     if (btn) { btn.disabled = true; btn.textContent = '⏳ Creando cuenta...'; }
 
-    const { data, error } = await supabase.functions.invoke('crear-usuario', {
+    const { data, error } = await sb.functions.invoke('crear-usuario', {
       body: { email: correo, password, nombre, rol, telefono, cargo, area }
     });
 
@@ -2010,7 +2010,7 @@
     if (ticketsDelUsuario > 0) msg += `\n\nTiene ${ticketsDelUsuario} ticket(s). Se desvincularán.`;
     if (!confirm(msg)) return;
 
-    const { error } = await supabase.from('usuarios').delete().eq('id', id);
+    const { error } = await sb.from('usuarios').delete().eq('id', id);
     if (error) { console.error(error); alert('Error al eliminar'); return; }
     await cargarUsuarios();
   }
@@ -2114,7 +2114,7 @@
       timestamp: ahora 
     });
 
-    const { error } = await supabase.from('tickets').update({ historial: historialActual }).eq('id', id);
+    const { error } = await sb.from('tickets').update({ historial: historialActual }).eq('id', id);
     if (error) { console.error(error); alert('Error al guardar'); return; }
     await cargarTickets();
     cerrarTicketModal();
