@@ -1568,8 +1568,1198 @@
   </section>
 </div>
 
+
 <script>
-  // ⬇⬇⬇ TODO EL JAVASCRIPT IRÁ AQUÍ (Bloque C) ⬇⬇⬇
+  /* ============================================
+     CONFIGURACIÓN SUPABASE
+     ============================================ */
+  const SUPABASE_URL = 'https://wzutgcmcjtdnmvcdtlgr.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_llbzE6_fJC3Y4ISBy2ZQIQ_PfE5t4IZ';
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  /* ============================================
+     ESTADO GLOBAL
+     ============================================ */
+  let tickets = [];
+  let usuarios = [];
+  let filtroActual = 'todos';
+  let usuarioSeleccionado = null;
+
+  const SLA = { alta: 4, media: 24, baja: 72 };
+  const ORDEN_PRIORIDAD = { alta: 1, media: 2, baja: 3 };
+
+  /* ============================================
+     HELPERS
+     ============================================ */
+  function escapeHtml(str) {
+    return String(str || '').replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+
+  function formatearDuracion(ms) {
+    const min = Math.floor(ms / 60000);
+    if (min < 60) return min + ' min';
+    const h = Math.floor(min / 60);
+    if (h < 24) return h + 'h ' + (min % 60) + 'm';
+    const d = Math.floor(h / 24);
+    return d + 'd ' + (h % 24) + 'h';
+  }
+
+  function formatearFecha(iso) {
+    if (!iso) return '';
+    return new Date(iso).toLocaleString('es-CO', {
+      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+    });
+  }
+
+  function horasTranscurridas(t) {
+    const fin = t.fecha_cierre ? new Date(t.fecha_cierre) : new Date();
+    return (fin - new Date(t.fecha_creacion)) / 3600000;
+  }
+
+  function estaVencido(t) {
+    if (t.estado === 'cerrado') return false;
+    return horasTranscurridas(t) > SLA[t.prioridad];
+  }
+
+  /* ============================================
+     CARGAR DATOS DESDE SUPABASE
+     ============================================ */
+  async function cargarTodo() {
+    await Promise.all([cargarTickets(), cargarUsuarios()]);
+  }
+
+  async function cargarTickets() {
+    const { data, error } = await supabase
+      .from('tickets')
+      .select('*')
+      .order('fecha_creacion', { ascending: false });
+
+    if (error) {
+      console.error('Error cargando tickets:', error);
+      document.getElementById('listaTickets').innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">⚠</div>
+          Error al cargar tickets: ${escapeHtml(error.message)}
+        </div>`;
+      return;
+    }
+    tickets = data || [];
+    render();
+  }
+
+  async function cargarUsuarios() {
+    const { data, error } = await supabase
+      .from('usuarios')
+      .select('*')
+      .order('nombre', { ascending: true });
+
+    if (error) {
+      console.error('Error cargando usuarios:', error);
+      return;
+    }
+    usuarios = data || [];
+    renderUsuarios();
+    document.getElementById('totalUsuarios').textContent = usuarios.length;
+  }
+
+  /* ============================================
+     AUTOCOMPLETE DE USUARIOS
+     ============================================ */
+  function buscarUsuario() {
+    const input = document.getElementById('buscadorUsuario');
+    const list = document.getElementById('autocompleteList');
+    const query = input.value.toLowerCase().trim();
+
+    if (!query) {
+      // Mostrar los primeros 8 usuarios
+      mostrarAutocomplete(usuarios.slice(0, 8));
+      return;
+    }
+
+    const resultados = usuarios.filter(u =>
+      (u.nombre || '').toLowerCase().includes(query) ||
+      (u.correo || '').toLowerCase().includes(query) ||
+      (u.cargo || '').toLowerCase().includes(query) ||
+      (u.area || '').toLowerCase().includes(query)
+    ).slice(0, 10);
+
+    mostrarAutocomplete(resultados);
+  }
+
+  function mostrarAutocomplete(lista) {
+    const list = document.getElementById('autocompleteList');
+
+    if (lista.length === 0) {
+      list.innerHTML = `
+        <div class="autocomplete-empty">
+          No se encontraron usuarios.
+          <br><br>
+          <button class="btn btn-ghost" onclick="abrirModalUsuarioNuevo()" style="width:auto;">➕ Crear usuario nuevo</button>
+        </div>`;
+      list.classList.add('activo');
+      return;
+    }
+
+    list.innerHTML = lista.map(u => `
+      <div class="autocomplete-item" onclick="seleccionarUsuario(${u.id})">
+        <div class="autocomplete-nombre">${escapeHtml(u.nombre)}</div>
+        <div class="autocomplete-meta">
+          ${escapeHtml(u.correo || '')}
+          ${u.cargo ? ' · ' + escapeHtml(u.cargo) : ''}
+          ${u.area ? ' · ' + escapeHtml(u.area) : ''}
+        </div>
+      </div>
+    `).join('');
+    list.classList.add('activo');
+  }
+
+  function seleccionarUsuario(id) {
+    const u = usuarios.find(x => x.id === id);
+    if (!u) return;
+    usuarioSeleccionado = u;
+
+    document.getElementById('buscadorUsuario').value = u.nombre;
+    document.getElementById('autocompleteList').classList.remove('activo');
+
+    const chip = document.getElementById('usuarioSeleccionado');
+    chip.innerHTML = `
+      <div class="usuario-chip">
+        <div class="usuario-chip-info">
+          <div class="usuario-chip-nombre">${escapeHtml(u.nombre)}</div>
+          <div class="usuario-chip-meta">
+            📧 ${escapeHtml(u.correo)}
+            ${u.telefono ? ' · 📞 ' + escapeHtml(u.telefono) : ''}
+            ${u.cargo ? ' · 💼 ' + escapeHtml(u.cargo) : ''}
+          </div>
+        </div>
+        <button class="usuario-chip-remove" onclick="limpiarUsuarioSeleccionado()" title="Quitar">✕</button>
+      </div>`;
+  }
+
+  function limpiarUsuarioSeleccionado() {
+    usuarioSeleccionado = null;
+    document.getElementById('buscadorUsuario').value = '';
+    document.getElementById('usuarioSeleccionado').innerHTML = '';
+    document.getElementById('buscadorUsuario').focus();
+  }
+
+  // Cerrar autocomplete al hacer clic fuera
+  document.addEventListener('click', (e) => {
+    const wrap = document.querySelector('.autocomplete-wrap');
+    if (wrap && !wrap.contains(e.target)) {
+      document.getElementById('autocompleteList')?.classList.remove('activo');
+    }
+  });
+
+  /* ============================================
+     CREAR TICKET
+     ============================================ */
+  async function crearTicket() {
+    const titulo = document.getElementById('titulo').value.trim();
+    const descripcion = document.getElementById('descripcion').value.trim();
+    const prioridad = document.getElementById('prioridad').value;
+
+    if (!usuarioSeleccionado) {
+      alert('Debes seleccionar un solicitante del directorio');
+      document.getElementById('buscadorUsuario').focus();
+      return;
+    }
+    if (!titulo) {
+      alert('El título es obligatorio');
+      document.getElementById('titulo').focus();
+      return;
+    }
+
+    const ahora = new Date().toISOString();
+    const historialInicial = [{
+      tipo: 'creacion',
+      autor: usuarioSeleccionado.nombre,
+      texto: `Ticket creado con prioridad ${prioridad.toUpperCase()}`,
+      fecha: formatearFecha(ahora),
+      timestamp: ahora
+    }];
+
+    const { error } = await supabase.from('tickets').insert({
+      titulo,
+      descripcion,
+      solicitante: usuarioSeleccionado.nombre,
+      usuario_id: usuarioSeleccionado.id,
+      prioridad,
+      estado: 'abierto',
+      fecha_creacion: ahora,
+      historial: historialInicial
+    });
+
+    if (error) {
+      console.error(error);
+      alert('Error al crear el ticket: ' + error.message);
+      return;
+    }
+
+    // Limpiar formulario
+    document.getElementById('titulo').value = '';
+    document.getElementById('descripcion').value = '';
+    document.getElementById('prioridad').value = 'media';
+    limpiarUsuarioSeleccionado();
+
+    if (prioridad === 'alta') {
+      notificarAltaPrioridad({ titulo, solicitante: usuarioSeleccionado.nombre });
+    }
+
+    await cargarTickets();
+  }
+
+  /* ============================================
+     CAMBIAR ESTADO
+     ============================================ */
+  async function cambiarEstado(id) {
+    const t = tickets.find(x => x.id === id);
+    if (!t) return;
+
+    const ahora = new Date().toISOString();
+    let nuevoEstado = '';
+    let textoCambio = '';
+
+    if (t.estado === 'abierto') {
+      nuevoEstado = 'proceso';
+      textoCambio = 'Estado: ABIERTO → EN PROCESO';
+    } else if (t.estado === 'proceso') {
+      nuevoEstado = 'cerrado';
+      textoCambio = 'Estado: EN PROCESO → CERRADO';
+    } else {
+      nuevoEstado = 'abierto';
+      textoCambio = 'Estado: CERRADO → ABIERTO (reabierto)';
+    }
+
+    const historialActual = Array.isArray(t.historial) ? t.historial.slice() : [];
+    historialActual.push({
+      tipo: 'estado',
+      autor: 'Sistema',
+      texto: textoCambio,
+      fecha: formatearFecha(ahora),
+      timestamp: ahora
+    });
+
+    const { error } = await supabase
+      .from('tickets')
+      .update({
+        estado: nuevoEstado,
+        fecha_cierre: nuevoEstado === 'cerrado' ? ahora : null,
+        historial: historialActual
+      })
+      .eq('id', id);
+
+    if (error) {
+      console.error(error);
+      alert('Error al actualizar el ticket');
+      return;
+    }
+
+    await cargarTickets();
+  }
+
+  /* ============================================
+     ELIMINAR TICKET
+     ============================================ */
+  async function eliminar(id) {
+    if (!confirm('¿Eliminar este ticket?')) return;
+
+    const { error } = await supabase.from('tickets').delete().eq('id', id);
+    if (error) {
+      console.error(error);
+      alert('Error al eliminar');
+      return;
+    }
+    await cargarTickets();
+  }
+
+  /* ============================================
+     FILTRAR
+     ============================================ */
+  function filtrar(filtro, btn) {
+    filtroActual = filtro;
+    document.querySelectorAll('.filtros .chip').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  }
+
+  /* ============================================
+     KPIs
+     ============================================ */
+  function calcularKPIs() {
+    const total = tickets.length;
+    const abiertos = tickets.filter(t => t.estado === 'abierto').length;
+    const proceso = tickets.filter(t => t.estado === 'proceso').length;
+    const cerrados = tickets.filter(t => t.estado === 'cerrado').length;
+    const vencidos = tickets.filter(estaVencido).length;
+    const pct = total ? Math.round((cerrados / total) * 100) : 0;
+
+    const alta = tickets.filter(t => t.prioridad === 'alta').length;
+    const media = tickets.filter(t => t.prioridad === 'media').length;
+    const baja = tickets.filter(t => t.prioridad === 'baja').length;
+    const altaCritica = tickets.filter(t => t.prioridad === 'alta' && t.estado !== 'cerrado').length;
+
+    const cerradosConTiempo = tickets.filter(t => t.fecha_cierre && t.fecha_creacion);
+    let tiempoProm = '—';
+    if (cerradosConTiempo.length) {
+      const sumaMs = cerradosConTiempo.reduce((acc, t) =>
+        acc + (new Date(t.fecha_cierre) - new Date(t.fecha_creacion)), 0);
+      tiempoProm = formatearDuracion(sumaMs / cerradosConTiempo.length);
+    }
+
+    const hoy = new Date().toDateString();
+    const ticketsHoy = tickets.filter(t =>
+      new Date(t.fecha_creacion).toDateString() === hoy).length;
+
+    document.getElementById('kpiTotal').textContent = total;
+    document.getElementById('kpiTotalSub').textContent = ticketsHoy + ' creados hoy';
+    document.getElementById('kpiAbiertos').textContent = abiertos;
+    document.getElementById('kpiProceso').textContent = proceso;
+    document.getElementById('kpiCerrados').textContent = cerrados;
+    document.getElementById('kpiVencidos').textContent = vencidos;
+    document.getElementById('pctResolucion').textContent = pct + '%';
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('pAlta').textContent = alta;
+    document.getElementById('pMedia').textContent = media;
+    document.getElementById('pBaja').textContent = baja;
+    document.getElementById('tiempoProm').textContent = tiempoProm;
+    document.getElementById('ticketsHoy').textContent = ticketsHoy;
+    document.getElementById('altaCritica').textContent = altaCritica;
+  }
+
+  /* ============================================
+     RENDER TICKETS
+     ============================================ */
+  function render() {
+    const lista = document.getElementById('listaTickets');
+    const query = (document.getElementById('buscador')?.value || '').toLowerCase().trim();
+
+    let visibles = filtroActual === 'todos'
+      ? [...tickets]
+      : tickets.filter(t => t.estado === filtroActual);
+
+    if (query) {
+      visibles = visibles.filter(t =>
+        (t.titulo || '').toLowerCase().includes(query) ||
+        (t.solicitante || '').toLowerCase().includes(query) ||
+        (t.descripcion || '').toLowerCase().includes(query)
+      );
+    }
+
+    visibles.sort((a, b) => {
+      const p = ORDEN_PRIORIDAD[a.prioridad] - ORDEN_PRIORIDAD[b.prioridad];
+      if (p !== 0) return p;
+      return new Date(b.fecha_creacion) - new Date(a.fecha_creacion);
+    });
+
+    if (visibles.length === 0) {
+      lista.innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">◇</div>
+          ${query ? 'No hay resultados para "' + escapeHtml(query) + '"' : 'No hay tickets para mostrar'}
+        </div>`;
+    } else {
+      lista.innerHTML = visibles.map(t => {
+        const vencido = estaVencido(t);
+        const numActividad = (t.historial || []).length;
+        return `
+        <article class="ticket ${t.prioridad} ${vencido ? 'vencido' : ''}" onclick="abrirTicket(${t.id})">
+          <div class="ticket-head">
+            <h3>${escapeHtml(t.titulo)}</h3>
+            <span>
+              ${vencido ? '<span class="badge badge-vencido">⚠ VENCIDO</span>' : ''}
+              <span class="badge ${t.estado}">${t.estado.toUpperCase()}</span>
+            </span>
+          </div>
+          ${t.descripcion ? '<p>' + escapeHtml(t.descripcion) + '</p>' : ''}
+          <div class="ticket-meta">
+            <span>👤 ${escapeHtml(t.solicitante)}</span>
+            <span>⚡ ${t.prioridad} · SLA ${SLA[t.prioridad]}h</span>
+            <span>🕒 ${formatearFecha(t.fecha_creacion)}</span>
+            ${numActividad > 0 ? `<span>💬 ${numActividad} actividad${numActividad !== 1 ? 'es' : ''}</span>` : ''}
+          </div>
+          <div class="ticket-actions">
+            <button class="btn btn-ghost" onclick="event.stopPropagation(); cambiarEstado(${t.id})">Cambiar estado</button>
+            <button class="btn btn-ghost" onclick="event.stopPropagation(); eliminar(${t.id})">Eliminar</button>
+          </div>
+        </article>`;
+      }).join('');
+    }
+
+    calcularKPIs();
+    actualizarGraficos();
+  }
+
+  /* ============================================
+     RENDER USUARIOS (DIRECTORIO)
+     ============================================ */
+  function renderUsuarios() {
+    const lista = document.getElementById('listaUsuarios');
+    const query = (document.getElementById('buscadorUsuarios')?.value || '').toLowerCase().trim();
+
+    let visibles = [...usuarios];
+    if (query) {
+      visibles = visibles.filter(u =>
+        (u.nombre || '').toLowerCase().includes(query) ||
+        (u.correo || '').toLowerCase().includes(query) ||
+        (u.cargo || '').toLowerCase().includes(query) ||
+        (u.area || '').toLowerCase().includes(query)
+      );
+    }
+
+    if (visibles.length === 0) {
+      lista.innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">👥</div>
+          ${query ? 'No hay usuarios que coincidan' : 'Aún no hay usuarios registrados'}
+          <br><br>
+          <button class="btn btn-ghost" onclick="abrirModalUsuarioNuevo()" style="width:auto;">➕ Crear el primero</button>
+        </div>`;
+      return;
+    }
+
+    lista.innerHTML = visibles.map(u => `
+      <div class="usuario-card">
+        <div class="usuario-card-info">
+          <div class="usuario-card-nombre">${escapeHtml(u.nombre)}</div>
+          <div class="usuario-card-meta">
+            <span>📧 ${escapeHtml(u.correo)}</span>
+            ${u.telefono ? `<span>📞 ${escapeHtml(u.telefono)}</span>` : ''}
+            ${u.cargo ? `<span>💼 ${escapeHtml(u.cargo)}</span>` : ''}
+            ${u.area ? `<span>🏢 ${escapeHtml(u.area)}</span>` : ''}
+          </div>
+        </div>
+        <div class="usuario-card-actions">
+          <button class="btn btn-ghost" onclick="editarUsuario(${u.id})">Editar</button>
+          <button class="btn btn-danger" onclick="eliminarUsuario(${u.id})">Eliminar</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  /* ============================================
+     MODAL CREAR/EDITAR USUARIO
+     ============================================ */
+  function abrirModalUsuarioNuevo() {
+    abrirModalUsuario(null);
+  }
+
+  function editarUsuario(id) {
+    const u = usuarios.find(x => x.id === id);
+    if (!u) return;
+    abrirModalUsuario(u);
+  }
+
+  function abrirModalUsuario(u) {
+    const esEdicion = !!u;
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay activo';
+    overlay.onclick = (e) => { if (e.target === overlay) cerrarModalUsuario(); };
+
+    overlay.innerHTML = `
+      <div class="modal" style="max-width: 520px;">
+        <div class="modal-head">
+          <div style="flex:1">
+            <h2>${esEdicion ? '✏️ Editar usuario' : '➕ Nuevo usuario'}</h2>
+            <p style="font-size:12.5px; color:var(--text-muted);">${esEdicion ? 'Actualiza los datos del usuario' : 'Agrega un nuevo usuario al directorio'}</p>
+          </div>
+          <button class="modal-close" onclick="cerrarModalUsuario()">✕</button>
+        </div>
+
+        <div class="form-grid">
+          <div>
+            <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.05em;">Nombre completo *</label>
+            <input id="uNombre" placeholder="Ej: Juan Pérez" value="${esEdicion ? escapeHtml(u.nombre) : ''}" />
+          </div>
+
+          <div>
+            <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.05em;">Correo institucional *</label>
+            <input id="uCorreo" type="email" placeholder="usuario@empresa.com" value="${esEdicion ? escapeHtml(u.correo) : ''}" />
+          </div>
+
+          <div class="form-row">
+            <div>
+              <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.05em;">Teléfono</label>
+              <input id="uTelefono" placeholder="+57 300 000 0000" value="${esEdicion ? escapeHtml(u.telefono || '') : ''}" />
+            </div>
+            <div>
+              <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.05em;">Cargo</label>
+              <input id="uCargo" placeholder="Ej: Analista" value="${esEdicion ? escapeHtml(u.cargo || '') : ''}" />
+            </div>
+          </div>
+
+          <div>
+            <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.05em;">Área / Departamento</label>
+            <input id="uArea" placeholder="Ej: Sistemas, Contabilidad, RRHH..." value="${esEdicion ? escapeHtml(u.area || '') : ''}" />
+          </div>
+
+          <button class="btn btn-primary" onclick="guardarUsuario(${esEdicion ? u.id : 'null'})">
+            ${esEdicion ? 'Guardar cambios' : 'Crear usuario'}
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+    setTimeout(() => document.getElementById('uNombre')?.focus(), 100);
+  }
+
+  function cerrarModalUsuario() {
+    const overlay = document.querySelector('.modal-overlay');
+    if (overlay) overlay.remove();
+  }
+
+  async function guardarUsuario(id) {
+    const nombre = document.getElementById('uNombre').value.trim();
+    const correo = document.getElementById('uCorreo').value.trim();
+    const telefono = document.getElementById('uTelefono').value.trim();
+    const cargo = document.getElementById('uCargo').value.trim();
+    const area = document.getElementById('uArea').value.trim();
+
+    if (!nombre) { alert('El nombre es obligatorio'); return; }
+    if (!correo) { alert('El correo es obligatorio'); return; }
+
+    const datos = { nombre, correo, telefono: telefono || null, cargo: cargo || null, area: area || null };
+
+    let error;
+    if (id) {
+      ({ error } = await supabase.from('usuarios').update(datos).eq('id', id));
+    } else {
+      ({ error } = await supabase.from('usuarios').insert(datos));
+    }
+
+    if (error) {
+      console.error(error);
+      if (error.code === '23505') {
+        alert('Ya existe un usuario con ese correo electrónico');
+      } else {
+        alert('Error al guardar: ' + error.message);
+      }
+      return;
+    }
+
+    cerrarModalUsuario();
+    await cargarUsuarios();
+
+    // Si estábamos creando un usuario para un ticket nuevo, autoseleccionarlo
+    if (!id && usuarioSeleccionado === null) {
+      const nuevo = usuarios.find(x => x.correo === correo);
+      if (nuevo) seleccionarUsuario(nuevo.id);
+    }
+  }
+
+  async function eliminarUsuario(id) {
+    const u = usuarios.find(x => x.id === id);
+    if (!u) return;
+
+    const ticketsDelUsuario = tickets.filter(t => t.usuario_id === id).length;
+    let msg = `¿Eliminar a "${u.nombre}" del directorio?`;
+    if (ticketsDelUsuario > 0) {
+      msg += `\n\nEste usuario tiene ${ticketsDelUsuario} ticket(s) asociado(s). Los tickets se mantendrán pero se desvincularán.`;
+    }
+
+    if (!confirm(msg)) return;
+
+    const { error } = await supabase.from('usuarios').delete().eq('id', id);
+    if (error) {
+      console.error(error);
+      alert('Error al eliminar');
+      return;
+    }
+    await cargarUsuarios();
+  }
+
+  /* ============================================
+     MODAL DE TICKET (DETALLE)
+     ============================================ */
+  function abrirTicket(id) {
+    const t = tickets.find(x => x.id === id);
+    if (!t) return;
+
+    const vencido = estaVencido(t);
+    const historial = Array.isArray(t.historial) ? t.historial.slice().reverse() : [];
+
+    // Buscar datos completos del usuario si está vinculado
+    const u = t.usuario_id ? usuarios.find(x => x.id === t.usuario_id) : null;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay activo';
+    overlay.onclick = (e) => { if (e.target === overlay) cerrarTicketModal(); };
+
+    overlay.innerHTML = `
+      <div class="modal">
+        <div class="modal-head">
+          <div style="flex:1">
+            <h2>${escapeHtml(t.titulo)}</h2>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+              ${vencido ? '<span class="badge badge-vencido">⚠ VENCIDO</span>' : ''}
+              <span class="badge ${t.estado}">${t.estado.toUpperCase()}</span>
+              <span class="badge ${t.prioridad}">${t.prioridad.toUpperCase()}</span>
+            </div>
+          </div>
+          <button class="modal-close" onclick="cerrarTicketModal()">✕</button>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px; font-size:12.5px;">
+          <div>
+            <div style="color:var(--text-dim); font-size:11px; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Solicitante</div>
+            <div style="color:var(--text);">👤 ${escapeHtml(t.solicitante)}</div>
+          </div>
+          ${u ? `
+            <div>
+              <div style="color:var(--text-dim); font-size:11px; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Correo</div>
+              <div style="color:var(--text); word-break:break-all;">📧 ${escapeHtml(u.correo)}</div>
+            </div>
+            ${u.telefono ? `
+              <div>
+                <div style="color:var(--text-dim); font-size:11px; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Teléfono</div>
+                <div style="color:var(--text);">📞 ${escapeHtml(u.telefono)}</div>
+              </div>` : ''}
+            ${u.cargo || u.area ? `
+              <div>
+                <div style="color:var(--text-dim); font-size:11px; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Cargo / Área</div>
+                <div style="color:var(--text);">💼 ${escapeHtml(u.cargo || '—')} ${u.area ? '· 🏢 ' + escapeHtml(u.area) : ''}</div>
+              </div>` : ''}
+          ` : ''}
+          <div>
+            <div style="color:var(--text-dim); font-size:11px; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Creado</div>
+            <div style="color:var(--text);">🕒 ${formatearFecha(t.fecha_creacion)}</div>
+          </div>
+          ${t.fecha_cierre ? `
+            <div>
+              <div style="color:var(--text-dim); font-size:11px; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Cerrado</div>
+              <div style="color:var(--text);">✅ ${formatearFecha(t.fecha_cierre)}</div>
+            </div>` : ''}
+        </div>
+
+        ${t.descripcion ? `
+          <div style="background: rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px 16px; font-size:13.5px; color:var(--text-muted); line-height:1.6; margin-bottom:20px; word-break:break-word;">
+            ${escapeHtml(t.descripcion)}
+          </div>
+        ` : ''}
+
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px;">
+          <button class="btn btn-ghost" onclick="cambiarEstado(${t.id}).then(() => { cerrarTicketModal(); abrirTicket(${t.id}); })">
+            Cambiar estado
+          </button>
+          <button class="btn btn-ghost" onclick="if(confirm('¿Eliminar este ticket?')) { eliminar(${t.id}).then(() => cerrarTicketModal()); }">
+            Eliminar
+          </button>
+        </div>
+
+        <div class="timeline-title">
+          <span>📝 Historial de actividad</span>
+          <span style="color:var(--text-dim); font-weight:400; text-transform:none; letter-spacing:0;">(${historial.length})</span>
+        </div>
+
+        <div class="timeline">
+          ${historial.length === 0 
+            ? '<div class="timeline-item creacion"><div class="timeline-item-texto" style="color:var(--text-dim);">Sin actividad registrada</div></div>'
+            : historial.map(h => `
+                <div class="timeline-item ${h.tipo}">
+                  <div class="timeline-item-head">
+                    <span class="timeline-item-autor">${escapeHtml(h.autor)}</span>
+                    <span class="timeline-item-fecha">${escapeHtml(h.fecha)}</span>
+                  </div>
+                  <div class="timeline-item-texto">${escapeHtml(h.texto)}</div>
+                </div>
+              `).join('')
+          }
+        </div>
+
+        ${t.estado !== 'cerrado' ? `
+          <div class="comment-form">
+            <input id="comentAutor" placeholder="Tu nombre" autocomplete="off" value="${escapeHtml(localStorage.getItem('autorDefault') || '')}" />
+            <textarea id="comentTexto" placeholder="Escribe un comentario o actualización..."></textarea>
+            <button class="btn btn-primary" onclick="agregarComentario(${t.id})">
+              Agregar comentario →
+            </button>
+          </div>
+        ` : `
+          <div class="comment-form" style="text-align:center; padding: 16px; color: var(--text-dim); font-size: 13px;">
+            🔒 Este ticket está cerrado. Cambia el estado para agregar comentarios.
+          </div>
+        `}
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+    setTimeout(() => document.getElementById('comentAutor')?.focus(), 100);
+  }
+
+  function cerrarTicketModal() {
+    document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
+  }
+
+  async function agregarComentario(id) {
+    const t = tickets.find(x => x.id === id);
+    if (!t) return;
+
+    const autorInput = document.getElementById('comentAutor');
+    const textoInput = document.getElementById('comentTexto');
+    const autor = autorInput.value.trim();
+    const texto = textoInput.value.trim();
+
+    if (!autor) { alert('Por favor escribe tu nombre'); autorInput.focus(); return; }
+    if (!texto) { alert('El comentario no puede estar vacío'); textoInput.focus(); return; }
+
+    const ahora = new Date().toISOString();
+    const historialActual = Array.isArray(t.historial) ? t.historial.slice() : [];
+    historialActual.push({
+      tipo: 'comentario',
+      autor,
+      texto,
+      fecha: formatearFecha(ahora),
+      timestamp: ahora
+    });
+
+    const { error } = await supabase
+      .from('tickets')
+      .update({ historial: historialActual })
+      .eq('id', id);
+
+    if (error) {
+      console.error(error);
+      alert('Error al guardar el comentario');
+      return;
+    }
+
+    localStorage.setItem('autorDefault', autor);
+    await cargarTickets();
+    cerrarTicketModal();
+    abrirTicket(id);
+  }
+
+  /* ============================================
+     GRÁFICOS
+     ============================================ */
+  let chartTendencia = null;
+  let chartPrioridad = null;
+
+  const COLORES = {
+    accent: '#7c5cff', accent2: '#22d3ee',
+    alta: '#ef4444', media: '#f59e0b', baja: '#10b981'
+  };
+
+  function actualizarGraficos() {
+    actualizarTendencia();
+    actualizarPrioridad();
+  }
+
+  function actualizarTendencia() {
+    const canvas = document.getElementById('chartTendencia');
+    if (!canvas || typeof Chart === 'undefined') return;
+
+    const labels = [];
+    const valores = [];
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      labels.push(d.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric' }));
+      valores.push(tickets.filter(t =>
+        new Date(t.fecha_creacion).toDateString() === d.toDateString()).length);
+    }
+
+    const textColor = document.body.classList.contains('light') ? '#6a6a74' : '#5a5a64';
+    const gridColor = document.body.classList.contains('light') ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.04)';
+
+    const data = {
+      labels,
+      datasets: [{
+        label: 'Tickets creados',
+        data: valores,
+        borderColor: COLORES.accent,
+        backgroundColor: (ctx) => {
+          const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, 220);
+          gradient.addColorStop(0, 'rgba(124, 92, 255, 0.4)');
+          gradient.addColorStop(1, 'rgba(124, 92, 255, 0)');
+          return gradient;
+        },
+        borderWidth: 2, fill: true, tension: 0.4,
+        pointBackgroundColor: COLORES.accent,
+        pointBorderColor: '#fff', pointBorderWidth: 2,
+        pointRadius: 4, pointHoverRadius: 6
+      }]
+    };
+
+    if (chartTendencia) {
+      chartTendencia.data = data;
+      chartTendencia.options.scales.y.ticks.color = textColor;
+      chartTendencia.options.scales.x.ticks.color = textColor;
+      chartTendencia.options.scales.y.grid.color = gridColor;
+      chartTendencia.update();
+      return;
+    }
+
+    chartTendencia = new Chart(canvas, {
+      type: 'line', data,
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(15, 15, 22, 0.95)',
+            borderColor: 'rgba(124, 92, 255, 0.3)', borderWidth: 1,
+            padding: 10, titleColor: '#f5f5f7', bodyColor: '#8a8a94',
+            displayColors: false
+          }
+        },
+        scales: {
+          y: { beginAtZero: true, ticks: { color: textColor, font: { size: 11 }, stepSize: 1, precision: 0 }, grid: { color: gridColor } },
+          x: { ticks: { color: textColor, font: { size: 11 } }, grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  function actualizarPrioridad() {
+    const canvas = document.getElementById('chartPrioridad');
+    if (!canvas || typeof Chart === 'undefined') return;
+
+    const alta = tickets.filter(t => t.prioridad === 'alta').length;
+    const media = tickets.filter(t => t.prioridad === 'media').length;
+    const baja = tickets.filter(t => t.prioridad === 'baja').length;
+    const textColor = document.body.classList.contains('light') ? '#6a6a74' : '#8a8a94';
+
+    const data = {
+      labels: ['Alta', 'Media', 'Baja'],
+      datasets: [{
+        data: [alta, media, baja],
+        backgroundColor: [COLORES.alta, COLORES.media, COLORES.baja],
+        borderWidth: 0, hoverOffset: 6
+      }]
+    };
+
+    if (chartPrioridad) {
+      chartPrioridad.data = data;
+      chartPrioridad.options.plugins.legend.labels.color = textColor;
+      chartPrioridad.update();
+      return;
+    }
+
+    chartPrioridad = new Chart(canvas, {
+      type: 'doughnut', data,
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '68%',
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              color: textColor, font: { size: 12, family: 'Inter' },
+              padding: 14, usePointStyle: true, pointStyle: 'circle',
+              boxWidth: 8, boxHeight: 8
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(15, 15, 22, 0.95)',
+            borderColor: 'rgba(124, 92, 255, 0.3)', borderWidth: 1,
+            padding: 10, titleColor: '#f5f5f7', bodyColor: '#8a8a94'
+          }
+        }
+      }
+    });
+  }
+
+  /* ============================================
+     NOTIFICACIONES
+     ============================================ */
+  function activarNotificaciones() {
+    if (!('Notification' in window)) {
+      alert('Tu navegador no soporta notificaciones');
+      return;
+    }
+    if (Notification.permission === 'granted') {
+      alert('Las notificaciones ya están activadas ✅');
+      return;
+    }
+    Notification.requestPermission().then(perm => {
+      const btn = document.getElementById('btnNotif');
+      if (perm === 'granted') {
+        btn.classList.add('activo');
+        new Notification('Notificaciones activadas', {
+          body: 'Recibirás alertas de tickets de alta prioridad.',
+          icon: 'icon-192.png'
+        });
+      } else {
+        btn.textContent = '🔕';
+      }
+    });
+  }
+
+  function notificarAltaPrioridad(ticket) {
+    if (!('Notification' in window)) return;
+    if (Notification.permission !== 'granted') return;
+    new Notification('🚨 Ticket de alta prioridad', {
+      body: `${ticket.titulo}\nSolicitante: ${ticket.solicitante}`,
+      icon: 'icon-192.png', tag: 'ticket-' + Date.now(),
+      requireInteraction: true
+    });
+  }
+
+  /* ============================================
+     TOGGLE TEMA
+     ============================================ */
+  function toggleTema() {
+    document.body.classList.toggle('light');
+    const esClaro = document.body.classList.contains('light');
+    document.getElementById('btnTema').textContent = esClaro ? '☀️' : '🌙';
+    localStorage.setItem('tema', esClaro ? 'light' : 'dark');
+    if (chartTendencia) { chartTendencia.destroy(); chartTendencia = null; }
+    if (chartPrioridad) { chartPrioridad.destroy(); chartPrioridad = null; }
+    actualizarGraficos();
+  }
+
+  /* ============================================
+     EXPORTAR CSV
+     ============================================ */
+  function exportarCSV() {
+    if (tickets.length === 0) { alert('No hay tickets para exportar'); return; }
+
+    const encabezados = ['ID', 'Título', 'Descripción', 'Solicitante', 'Correo', 'Teléfono', 'Cargo', 'Área', 'Prioridad', 'Estado', 'Fecha creación', 'Fecha cierre', 'Vencido', 'Actividad'];
+
+    const filas = tickets.map(t => {
+      const u = t.usuario_id ? usuarios.find(x => x.id === t.usuario_id) : null;
+      return [
+        t.id, t.titulo, t.descripcion || '', t.solicitante,
+        u?.correo || '', u?.telefono || '', u?.cargo || '', u?.area || '',
+        t.prioridad, t.estado,
+        formatearFecha(t.fecha_creacion),
+        t.fecha_cierre ? formatearFecha(t.fecha_cierre) : '',
+        estaVencido(t) ? 'SÍ' : 'NO',
+        (t.historial || []).length
+      ];
+    });
+
+    const escapar = (v) => `"${String(v).replace(/"/g, '""')}"`;
+    const csv = [encabezados, ...filas].map(f => f.map(escapar).join(',')).join('\n');
+
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tickets_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  /* ============================================
+     REPORTE PDF
+     ============================================ */
+  function generarReportePDF() {
+    if (tickets.length === 0) { alert('No hay tickets para generar el reporte'); return; }
+
+    const total = tickets.length;
+    const abiertos = tickets.filter(t => t.estado === 'abierto').length;
+    const proceso = tickets.filter(t => t.estado === 'proceso').length;
+    const cerrados = tickets.filter(t => t.estado === 'cerrado').length;
+    const vencidos = tickets.filter(estaVencido).length;
+    const pct = total ? Math.round((cerrados / total) * 100) : 0;
+    const alta = tickets.filter(t => t.prioridad === 'alta').length;
+    const media = tickets.filter(t => t.prioridad === 'media').length;
+    const baja = tickets.filter(t => t.prioridad === 'baja').length;
+
+    const cerradosConTiempo = tickets.filter(t => t.fecha_cierre && t.fecha_creacion);
+    let tiempoProm = '—';
+    if (cerradosConTiempo.length) {
+      const sumaMs = cerradosConTiempo.reduce((acc, t) =>
+        acc + (new Date(t.fecha_cierre) - new Date(t.fecha_creacion)), 0);
+      tiempoProm = formatearDuracion(sumaMs / cerradosConTiempo.length);
+    }
+
+    const recientes = [...tickets].sort((a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion)).slice(0, 10);
+    const vencidosList = tickets.filter(estaVencido).slice(0, 10);
+
+    const fechaHoy = new Date().toLocaleString('es-CO', {
+      day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+
+    const html = `
+      <div class="pdf-header">
+        <div class="pdf-header-left">
+          <div class="pdf-logo">🎫</div>
+          <div><h2>Mesa de Ayuda</h2><p>Reporte ejecutivo de tickets</p></div>
+        </div>
+        <div class="pdf-fecha">Generado<br><b>${fechaHoy}</b></div>
+      </div>
+
+      <div class="pdf-section-title">Resumen ejecutivo</div>
+      <div class="pdf-kpis">
+        <div class="pdf-kpi"><div class="pdf-kpi-label">Total</div><div class="pdf-kpi-value">${total}</div></div>
+        <div class="pdf-kpi"><div class="pdf-kpi-label">Abiertos</div><div class="pdf-kpi-value">${abiertos}</div></div>
+        <div class="pdf-kpi"><div class="pdf-kpi-label">En proceso</div><div class="pdf-kpi-value">${proceso}</div></div>
+        <div class="pdf-kpi"><div class="pdf-kpi-label">Cerrados</div><div class="pdf-kpi-value">${cerrados}</div></div>
+        <div class="pdf-kpi danger"><div class="pdf-kpi-label">Vencidos</div><div class="pdf-kpi-value">${vencidos}</div></div>
+      </div>
+
+      <div class="pdf-two-col">
+        <div class="pdf-box">
+          <h4>Distribución por prioridad</h4>
+          <div class="pdf-row"><span>🔴 Alta</span><b>${alta}</b></div>
+          <div class="pdf-row"><span>🟡 Media</span><b>${media}</b></div>
+          <div class="pdf-row"><span>🟢 Baja</span><b>${baja}</b></div>
+        </div>
+        <div class="pdf-box">
+          <h4>Indicadores clave</h4>
+          <div class="pdf-row"><span>Tasa de resolución</span><b>${pct}%</b></div>
+          <div class="pdf-row"><span>Tiempo prom. resolución</span><b>${tiempoProm}</b></div>
+          <div class="pdf-row"><span>Cumplimiento SLA</span><b>${total ? Math.round(((total - vencidos) / total) * 100) : 100}%</b></div>
+        </div>
+      </div>
+
+      <div class="pdf-section-title">Tickets recientes</div>
+      <table class="pdf-table">
+        <thead><tr><th>Título</th><th>Solicitante</th><th>Prioridad</th><th>Estado</th><th>Fecha</th></tr></thead>
+        <tbody>
+          ${recientes.map(t => `
+            <tr>
+              <td>${escapeHtml(t.titulo)}</td>
+              <td>${escapeHtml(t.solicitante)}</td>
+              <td><span class="pdf-badge ${t.prioridad}">${t.prioridad.toUpperCase()}</span></td>
+              <td><span class="pdf-badge ${t.estado}">${t.estado.toUpperCase()}</span></td>
+              <td>${formatearFecha(t.fecha_creacion)}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+
+      ${vencidosList.length ? `
+        <div class="pdf-section-title" style="color: #ef4444;">⚠ Tickets vencidos (fuera de SLA)</div>
+        <table class="pdf-table">
+          <thead><tr><th>Título</th><th>Solicitante</th><th>Prioridad</th><th>SLA</th><th>Transcurrido</th></tr></thead>
+          <tbody>
+            ${vencidosList.map(t => `
+              <tr>
+                <td>${escapeHtml(t.titulo)}</td>
+                <td>${escapeHtml(t.solicitante)}</td>
+                <td><span class="pdf-badge ${t.prioridad}">${t.prioridad.toUpperCase()}</span></td>
+                <td>${SLA[t.prioridad]}h</td>
+                <td style="color:#ef4444; font-weight:600;">${formatearDuracion(horasTranscurridas(t) * 3600000)}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>` : ''}
+
+      <div class="pdf-footer">
+        <span>Mesa de Ayuda · Reporte generado automáticamente</span>
+        <span>Página 1 de 1</span>
+      </div>
+    `;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'pdf-overlay activo';
+    overlay.innerHTML = `
+      <div class="pdf-preview">
+        <div id="pdfContent">${html}</div>
+        <div class="pdf-actions">
+          <button class="pdf-btn pdf-btn-secondary" onclick="cerrarPDF()">Cancelar</button>
+          <button class="pdf-btn pdf-btn-primary" onclick="descargarPDF()">📥 Descargar PDF</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+  }
+
+  function cerrarPDF() {
+    document.querySelectorAll('.pdf-overlay').forEach(o => o.remove());
+  }
+
+  async function descargarPDF() {
+    const contenido = document.getElementById('pdfContent');
+    if (!contenido) return;
+    const btn = document.querySelector('.pdf-btn-primary');
+    if (btn) { btn.textContent = '⏳ Generando...'; btn.disabled = true; }
+
+    try {
+      const canvas = await html2canvas(contenido, {
+        scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false
+      });
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pdfWidth - 20;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 10;
+      const imgData = canvas.toDataURL('image/png');
+      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+      heightLeft -= (pdfHeight - 20);
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight + 10;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        heightLeft -= (pdfHeight - 20);
+      }
+      pdf.save(`reporte_mesa_ayuda_${new Date().toISOString().slice(0, 10)}.pdf`);
+      cerrarPDF();
+    } catch (err) {
+      console.error(err);
+      alert('Error al generar PDF');
+      if (btn) { btn.textContent = '📥 Descargar PDF'; btn.disabled = false; }
+    }
+  }
+
+  /* ============================================
+     ATAJOS Y CIERRE DE MODALES
+     ============================================ */
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      cerrarTicketModal();
+      cerrarModalUsuario();
+      cerrarPDF();
+    }
+  });
+
+  /* ============================================
+     INIT
+     ============================================ */
+  document.addEventListener('DOMContentLoaded', () => {
+    if (localStorage.getItem('tema') === 'light') {
+      document.body.classList.add('light');
+      const btn = document.getElementById('btnTema');
+      if (btn) btn.textContent = '☀️';
+    }
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const btn = document.getElementById('btnNotif');
+      if (btn) btn.classList.add('activo');
+    }
+    cargarTodo();
+  });
+
+  /* ============================================
+     REALTIME (sincronización entre navegadores)
+     ============================================ */
+  supabase
+    .channel('realtime-todo')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => {
+      console.log('🔄 Cambio en tickets detectado');
+      cargarTickets();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'usuarios' }, () => {
+      console.log('🔄 Cambio en usuarios detectado');
+      cargarUsuarios();
+    })
+    .subscribe();
+
+  /* ============================================
+     PWA - SERVICE WORKER
+     ============================================ */
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+        .then(() => console.log('✅ Service Worker registrado'))
+        .catch(err => console.warn('⚠ SW no registrado:', err));
+    });
+  }
+
+  /* ============================================
+     AUTO-REFRESH VENCIDOS
+     ============================================ */
+  setInterval(() => {
+    if (tickets.some(estaVencido)) render();
+  }, 60000);
+  
 </script>
 
 </body>
