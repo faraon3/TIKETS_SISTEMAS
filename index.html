@@ -63,6 +63,7 @@
     transition: background 0.3s;
   }
 
+  /* ============ LOGIN ============ */
   .login-screen {
     position: fixed;
     inset: 0;
@@ -149,6 +150,7 @@
     color: var(--text-dim);
   }
 
+  /* ============ APP ============ */
   .app-container { display: none; }
   .app-container.activo { display: block; }
 
@@ -235,6 +237,61 @@
     border-color: rgba(16, 185, 129, 0.3);
   }
 
+  /* ============ BIENVENIDA SOLICITANTE ============ */
+  .welcome-card {
+    background: linear-gradient(135deg, rgba(124, 92, 255, 0.08), rgba(34, 211, 238, 0.04));
+    border: 1px solid rgba(124, 92, 255, 0.25);
+    border-radius: var(--radius);
+    padding: 32px;
+    margin-bottom: 24px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .welcome-card::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(circle, rgba(124, 92, 255, 0.08), transparent 60%);
+    animation: pulseWelcome 4s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes pulseWelcome {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+  }
+  .welcome-card > * { position: relative; z-index: 1; }
+  .welcome-icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+    display: block;
+  }
+  .welcome-card h2 {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+  }
+  .welcome-card p {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+  .welcome-card .btn-primary {
+    max-width: 320px;
+    margin: 0 auto;
+    display: flex;
+    padding: 16px 24px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  /* ============ KPIs ============ */
   .kpi-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -297,6 +354,15 @@
     opacity: 1 !important;
   }
 
+  .kpi-sin-clasificar { border-color: rgba(245, 158, 11, 0.3); }
+  .kpi-sin-clasificar .kpi-value {
+    background: linear-gradient(135deg, #f59e0b, #fbbf24);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ============ CARDS ============ */
   .card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -396,6 +462,7 @@
   .chart-wrap { position: relative; height: 220px; margin-top: 8px; }
   .chart-donut { height: 220px; }
 
+  /* ============ FORM ============ */
   .form-grid { display: grid; gap: 14px; }
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
@@ -429,12 +496,12 @@
   }
   select option { background: var(--bg-elev); color: var(--text); }
 
+  /* Autocomplete */
   .autocomplete-wrap { position: relative; }
   .autocomplete-list {
     position: absolute;
     top: calc(100% + 4px);
-    left: 0;
-    right: 0;
+    left: 0; right: 0;
     background: var(--bg-elev);
     border: 1px solid var(--border-strong);
     border-radius: var(--radius-sm);
@@ -507,6 +574,7 @@
     color: var(--danger);
   }
 
+  /* ============ BOTONES ============ */
   .btn {
     display: inline-flex;
     align-items: center;
@@ -562,6 +630,30 @@
     border-color: rgba(239, 68, 68, 0.4);
   }
 
+  /* Botones de prioridad para agentes */
+  .btn-prioridad {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+  .btn-prioridad:hover {
+    border-color: var(--border-strong);
+    color: var(--text);
+  }
+  .btn-prioridad.activa {
+    background: rgba(124, 92, 255, 0.15);
+    border-color: var(--accent);
+    color: #a58cff;
+  }
+
+  /* ============ FILTROS ============ */
   .filtros { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
   .chip {
     padding: 8px 14px;
@@ -580,6 +672,15 @@
     background: var(--text);
     color: var(--bg);
     border-color: var(--text);
+  }
+  .chip.sin-clasificar {
+    border-color: rgba(245, 158, 11, 0.3);
+    color: #fbbf24;
+  }
+  .chip.sin-clasificar.active {
+    background: #f59e0b;
+    color: #0a0a0f;
+    border-color: #f59e0b;
   }
 
   .section-header {
@@ -608,6 +709,7 @@
     pointer-events: none;
   }
 
+  /* ============ TICKETS ============ */
   .tickets-list { display: grid; gap: 12px; }
 
   .ticket {
@@ -635,10 +737,16 @@
     position: absolute;
     left: 0; top: 0; bottom: 0;
     width: 3px;
+    background: var(--border-strong);
   }
   .ticket.alta::before { background: var(--danger); }
   .ticket.media::before { background: var(--warning); }
   .ticket.baja::before { background: var(--success); }
+  .ticket.sin-clasificar::before {
+    background: #f59e0b;
+    box-shadow: 0 0 8px #f59e0b;
+    animation: pulse-danger 2s infinite;
+  }
   .ticket.vencido::before {
     background: #ef4444 !important;
     box-shadow: 0 0 12px #ef4444;
@@ -699,6 +807,17 @@
   .badge.media { background: rgba(245, 158, 11, 0.12); color: #fbbf24; }
   .badge.baja { background: rgba(16, 185, 129, 0.12); color: #34d399; }
 
+  .badge-sin-clasificar {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    animation: pulse-danger 2.5s infinite;
+  }
+  .badge-sin-clasificar::before {
+    background: #f59e0b;
+    box-shadow: 0 0 8px #f59e0b;
+  }
+
   .badge-vencido {
     background: rgba(239, 68, 68, 0.15);
     color: #f87171;
@@ -729,6 +848,7 @@
     z-index: 2;
   }
 
+  /* ============ USUARIOS ============ */
   .usuarios-list { display: grid; gap: 10px; }
   .usuario-card {
     background: rgba(255, 255, 255, 0.02);
@@ -792,6 +912,7 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  /* ============ TEMA CLARO ============ */
   body.light {
     --bg: #f7f7fa;
     --bg-elev: #ffffff;
@@ -816,6 +937,7 @@
     background: rgba(0, 0, 0, 0.02);
   }
 
+  /* ============ MODALES ============ */
   .modal-overlay {
     position: fixed;
     inset: 0;
@@ -935,6 +1057,7 @@
   .timeline-item.estado::before { background: var(--warning); box-shadow: 0 0 0 2px var(--warning); }
   .timeline-item.comentario::before { background: var(--accent-2); box-shadow: 0 0 0 2px var(--accent-2); }
   .timeline-item.creacion::before { background: var(--success); box-shadow: 0 0 0 2px var(--success); }
+  .timeline-item.prioridad::before { background: #f59e0b; box-shadow: 0 0 0 2px #f59e0b; }
   .timeline-item-head {
     display: flex;
     justify-content: space-between;
@@ -972,6 +1095,36 @@
     width: 100%;
   }
 
+  /* ============ ASIGNAR PRIORIDAD ============ */
+  .asignar-prioridad {
+    background: rgba(245, 158, 11, 0.08);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+  .asignar-prioridad-titulo {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #fbbf24;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .asignar-prioridad-botones {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .asignar-prioridad-botones button {
+    flex: 1;
+    min-width: 80px;
+  }
+
+  /* ============ PDF ============ */
   .pdf-overlay {
     position: fixed;
     inset: 0;
@@ -1048,6 +1201,7 @@
   }
   .pdf-kpi-value { font-size: 22px; font-weight: 700; color: #0a0a0f; }
   .pdf-kpi.danger .pdf-kpi-value { color: #ef4444; }
+  .pdf-kpi.warning .pdf-kpi-value { color: #f59e0b; }
 
   .pdf-two-col {
     display: grid;
@@ -1107,6 +1261,7 @@
   .pdf-badge.abierto { background: #ede9fe; color: #6d28d9; }
   .pdf-badge.proceso { background: #fef3c7; color: #b45309; }
   .pdf-badge.cerrado { background: #d1fae5; color: #047857; }
+  .pdf-badge.sin-clasificar { background: #fef3c7; color: #b45309; }
   .pdf-footer {
     margin-top: 30px;
     padding-top: 16px;
@@ -1141,7 +1296,7 @@
   .pdf-btn-secondary { background: #f0f0f5; color: #4a4a54; }
   .pdf-btn-secondary:hover { background: #e5e5ec; }
 
-  /* ============ CONTROL DE VISIBILIDAD POR ROL ============ */
+  /* ============ CONTROL POR ROL ============ */
   .solo-admin,
   .solo-admin-agente { display: none; }
 
@@ -1149,8 +1304,12 @@
   body[data-rol="admin"] .solo-admin-agente { display: revert; }
   body[data-rol="agente"] .solo-admin-agente { display: revert; }
 
+  .solo-solicitante { display: none; }
+  body[data-rol="solicitante"] .solo-solicitante { display: block; }
+
   body[data-rol="solicitante"] .ocultar-solicitante { display: none !important; }
 
+  /* ============ RESPONSIVE ============ */
   @media (max-width: 900px) {
     .kpi-grid { grid-template-columns: repeat(3, 1fr); }
     .pdf-kpis { grid-template-columns: repeat(3, 1fr); }
@@ -1172,6 +1331,9 @@
     .card { padding: 18px; margin-bottom: 16px; }
     .stats-card { padding: 18px; }
     .chart-card { padding: 16px !important; }
+    .welcome-card { padding: 24px 20px; }
+    .welcome-card h2 { font-size: 19px; }
+    .welcome-icon { font-size: 34px; }
     header { flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
     header h1 { font-size: 18px; }
     header p { font-size: 12px; }
@@ -1247,6 +1409,7 @@
     .modal { padding: 20px 18px; }
     .modal-head h2 { font-size: 16px; }
     .timeline { max-height: 240px; }
+    .asignar-prioridad-botones { flex-direction: column; }
   }
   @media (max-width: 380px) {
     .container {
@@ -1304,15 +1467,25 @@
       <h1 id="tituloHeader">Mesa de Ayuda</h1>
       <p id="subtituloHeader">Panel de control y gestión de tickets</p>
     </div>
-    <div class="usuario-logueado" id="usuarioLogueado">
+    <div class="usuario-logueado">
       <span>👤</span> <b id="nombreUsuario">—</b>
       <span class="rol-badge" id="rolBadge" style="display:none;"></span>
     </div>
     <button class="btn-icon" id="btnNotif" title="Activar notificaciones" onclick="activarNotificaciones()">🔔</button>
     <button class="btn-icon" id="btnTema" title="Cambiar tema" onclick="toggleTema()">🌙</button>
-    <button class="btn-icon solo-admin-agente" id="btnPDF" title="Generar reporte PDF" onclick="generarReportePDF()">📄</button>
-    <button class="btn-icon" id="btnSalir" title="Cerrar sesión" onclick="cerrarSesion()">🚪</button>
+    <button class="btn-icon solo-admin-agente" title="Generar reporte PDF" onclick="generarReportePDF()">📄</button>
+    <button class="btn-icon" title="Cerrar sesión" onclick="cerrarSesion()">🚪</button>
   </header>
+
+  <!-- BIENVENIDA SOLICITANTE -->
+  <section class="welcome-card solo-solicitante">
+    <span class="welcome-icon">👋</span>
+    <h2 id="welcomeNombre">¡Hola!</h2>
+    <p>Reporta un problema nuevo o revisa el estado de tus tickets.</p>
+    <button class="btn btn-primary" onclick="scrollToFormulario()">
+      ➕ Reportar un problema
+    </button>
+  </section>
 
   <!-- KPIs (solo admin y agente) -->
   <section class="kpi-grid solo-admin-agente">
@@ -1336,10 +1509,10 @@
       <div class="kpi-value" id="kpiCerrados">0</div>
       <div class="kpi-sub">resueltos</div>
     </div>
-    <div class="kpi kpi-danger">
-      <div class="kpi-label">⚠ Vencidos (SLA)</div>
-      <div class="kpi-value" id="kpiVencidos">0</div>
-      <div class="kpi-sub">fuera de tiempo</div>
+    <div class="kpi kpi-sin-clasificar">
+      <div class="kpi-label">⚠ Sin clasificar</div>
+      <div class="kpi-value" id="kpiSinClasificar">0</div>
+      <div class="kpi-sub">requieren prioridad</div>
     </div>
   </section>
 
@@ -1380,10 +1553,10 @@
   </section>
 
   <!-- Nuevo ticket -->
-  <section class="card">
+  <section class="card" id="formularioTicket">
     <div class="card-title">➕ Nuevo ticket</div>
     <div class="form-grid">
-      <div id="contenedorSolicitante">
+      <div id="contenedorSolicitante" class="ocultar-solicitante">
         <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.05em;">Solicitante *</label>
         <div class="autocomplete-wrap">
           <input id="buscadorUsuario" placeholder="🔍 Buscar por nombre o correo..." autocomplete="off" oninput="buscarUsuario()" onfocus="buscarUsuario()" />
@@ -1396,7 +1569,8 @@
       <textarea id="descripcion" placeholder="Describe el problema con detalle..."></textarea>
 
       <div class="form-row">
-        <select id="prioridad">
+        <select id="prioridad" class="ocultar-solicitante">
+          <option value="">🟡 Sin clasificar (el equipo asignará)</option>
           <option value="baja">🟢 Prioridad baja (SLA 72h)</option>
           <option value="media" selected>🟡 Prioridad media (SLA 24h)</option>
           <option value="alta">🔴 Prioridad alta (SLA 4h)</option>
@@ -1422,6 +1596,7 @@
     </div>
     <div class="filtros">
       <button class="chip active" data-filtro="todos" onclick="filtrar('todos', this)">Todos</button>
+      <button class="chip sin-clasificar" data-filtro="sin-clasificar" onclick="filtrar('sin-clasificar', this)">⚠ Sin clasificar</button>
       <button class="chip" data-filtro="abierto" onclick="filtrar('abierto', this)">Abiertos</button>
       <button class="chip" data-filtro="proceso" onclick="filtrar('proceso', this)">En proceso</button>
       <button class="chip" data-filtro="cerrado" onclick="filtrar('cerrado', this)">Cerrados</button>
@@ -1463,7 +1638,7 @@
   let perfilActual = null;
 
   const SLA = { alta: 4, media: 24, baja: 72 };
-  const ORDEN_PRIORIDAD = { alta: 1, media: 2, baja: 3 };
+  const ORDEN_PRIORIDAD = { null: 0, alta: 1, media: 2, baja: 3 };
 
   function escapeHtml(str) {
     return String(str || '').replace(/[&<>"']/g, c => ({
@@ -1494,7 +1669,13 @@
 
   function estaVencido(t) {
     if (t.estado === 'cerrado') return false;
+    if (!t.prioridad) return false; // Sin prioridad no tiene SLA aún
     return horasTranscurridas(t) > SLA[t.prioridad];
+  }
+
+  function scrollToFormulario() {
+    document.getElementById('formularioTicket').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => document.getElementById('titulo')?.focus(), 500);
   }
 
   /* LOGIN */
@@ -1536,11 +1717,10 @@
     const rol = perfil?.rol || 'solicitante';
     document.body.setAttribute('data-rol', rol);
 
-    // Header dinámico según rol
     const rolesTexto = {
       admin: { icono: '🎩', titulo: 'Panel de administración', sub: 'Control total de la mesa de ayuda' },
       agente: { icono: '🛠️', titulo: 'Mesa de soporte', sub: 'Atiende y gestiona tickets' },
-      solicitante: { icono: '👤', titulo: 'Mis tickets', sub: 'Reporta y sigue tus solicitudes' }
+      solicitante: { icono: '🎫', titulo: 'Mesa de Ayuda', sub: 'Reporta y sigue tus solicitudes' }
     };
     const info = rolesTexto[rol] || rolesTexto.solicitante;
     document.getElementById('logoHeader').textContent = info.icono;
@@ -1550,16 +1730,17 @@
     document.getElementById('nombreUsuario').textContent = 
       perfil?.nombre || usuarioActual.email;
 
-    // Badge de rol
     const badge = document.getElementById('rolBadge');
     badge.textContent = rol;
     badge.className = 'rol-badge ' + rol;
     badge.style.display = 'inline-block';
 
-    // Título dinámico de la lista
+    // Nombre en bienvenida si es solicitante
     if (rol === 'solicitante') {
+      const primerNombre = (perfil?.nombre || '').split(' ')[0] || '';
+      document.getElementById('welcomeNombre').textContent = 
+        primerNombre ? `¡Hola, ${primerNombre}!` : '¡Hola!';
       document.getElementById('tituloListaTickets').textContent = '🎫 Mis tickets';
-      document.getElementById('contenedorSolicitante').style.display = 'none';
     }
 
     document.getElementById('loginScreen').style.display = 'none';
@@ -1607,12 +1788,10 @@
   }
 
   async function cargarUsuarios() {
-    // Admin carga directorio. Agente y solicitante no.
     if (perfilActual?.rol !== 'admin') {
       usuarios = [];
       return;
     }
-
     const { data, error } = await sb
       .from('usuarios')
       .select('*')
@@ -1704,12 +1883,17 @@
   async function crearTicket() {
     const titulo = document.getElementById('titulo').value.trim();
     const descripcion = document.getElementById('descripcion').value.trim();
-    const prioridad = document.getElementById('prioridad').value;
+    
+    let prioridad;
+    if (perfilActual?.rol === 'solicitante') {
+      prioridad = null; // Sin prioridad - el agente asigna
+    } else {
+      prioridad = document.getElementById('prioridad').value || null;
+    }
 
     let solicitanteNombre, solicitanteId;
 
     if (perfilActual?.rol === 'solicitante') {
-      // El solicitante se autoasigna
       solicitanteNombre = perfilActual.nombre;
       solicitanteId = perfilActual.usuario_id;
       if (!solicitanteId) {
@@ -1729,10 +1913,14 @@
     if (!titulo) { alert('El título es obligatorio'); document.getElementById('titulo').focus(); return; }
 
     const ahora = new Date().toISOString();
+    const textoCreado = prioridad 
+      ? `Ticket creado con prioridad ${prioridad.toUpperCase()}`
+      : 'Ticket creado (sin clasificar)';
+    
     const historialInicial = [{
       tipo: 'creacion',
       autor: perfilActual?.nombre || usuarioActual.email,
-      texto: `Ticket creado con prioridad ${prioridad.toUpperCase()}`,
+      texto: textoCreado,
       fecha: formatearFecha(ahora),
       timestamp: ahora
     }];
@@ -1742,7 +1930,8 @@
       solicitante: solicitanteNombre,
       solicitante_id: solicitanteId,
       usuario_id: solicitanteId,
-      prioridad, estado: 'abierto',
+      prioridad,
+      estado: 'abierto',
       fecha_creacion: ahora,
       historial: historialInicial
     });
@@ -1751,8 +1940,10 @@
 
     document.getElementById('titulo').value = '';
     document.getElementById('descripcion').value = '';
-    document.getElementById('prioridad').value = 'media';
-    if (perfilActual?.rol !== 'solicitante') limpiarUsuarioSeleccionado();
+    if (perfilActual?.rol !== 'solicitante') {
+      document.getElementById('prioridad').value = 'media';
+      limpiarUsuarioSeleccionado();
+    }
 
     if (prioridad === 'alta') {
       notificarAltaPrioridad({ titulo, solicitante: solicitanteNombre });
@@ -1793,6 +1984,41 @@
     await cargarTickets();
   }
 
+  async function asignarPrioridad(id, nuevaPrioridad) {
+    if (perfilActual?.rol === 'solicitante') {
+      alert('Solo los agentes pueden asignar prioridad');
+      return;
+    }
+    const t = tickets.find(x => x.id === id);
+    if (!t) return;
+
+    const ahora = new Date().toISOString();
+    const prioridadAnterior = t.prioridad ? t.prioridad.toUpperCase() : 'SIN CLASIFICAR';
+    const textoCambio = `Prioridad: ${prioridadAnterior} → ${nuevaPrioridad.toUpperCase()}`;
+
+    const historialActual = Array.isArray(t.historial) ? t.historial.slice() : [];
+    historialActual.push({ 
+      tipo: 'prioridad', 
+      autor: perfilActual?.nombre || 'Sistema',
+      texto: textoCambio, 
+      fecha: formatearFecha(ahora), 
+      timestamp: ahora 
+    });
+
+    const { error } = await sb.from('tickets').update({
+      prioridad: nuevaPrioridad,
+      historial: historialActual
+    }).eq('id', id);
+
+    if (error) { console.error(error); alert('Error al asignar prioridad'); return; }
+    await cargarTickets();
+    // Reabrir modal si estaba abierto
+    if (document.querySelector('.modal-overlay')) {
+      cerrarTicketModal();
+      setTimeout(() => abrirTicket(id), 100);
+    }
+  }
+
   async function eliminar(id) {
     if (perfilActual?.rol !== 'admin') {
       alert('Solo los administradores pueden eliminar tickets');
@@ -1817,7 +2043,7 @@
     const abiertos = tickets.filter(t => t.estado === 'abierto').length;
     const proceso = tickets.filter(t => t.estado === 'proceso').length;
     const cerrados = tickets.filter(t => t.estado === 'cerrado').length;
-    const vencidos = tickets.filter(estaVencido).length;
+    const sinClasificar = tickets.filter(t => !t.prioridad).length;
     const pct = total ? Math.round((cerrados / total) * 100) : 0;
 
     const alta = tickets.filter(t => t.prioridad === 'alta').length;
@@ -1843,7 +2069,7 @@
     set('kpiAbiertos', abiertos);
     set('kpiProceso', proceso);
     set('kpiCerrados', cerrados);
-    set('kpiVencidos', vencidos);
+    set('kpiSinClasificar', sinClasificar);
     set('pctResolucion', pct + '%');
     const pb = document.getElementById('progressBar');
     if (pb) pb.style.width = pct + '%';
@@ -1867,7 +2093,10 @@
       visibles = visibles.filter(t => t.solicitante_id === perfilActual.usuario_id);
     }
 
-    if (filtroActual !== 'todos') {
+    // Filtros
+    if (filtroActual === 'sin-clasificar') {
+      visibles = visibles.filter(t => !t.prioridad);
+    } else if (filtroActual !== 'todos') {
       visibles = visibles.filter(t => t.estado === filtroActual);
     }
 
@@ -1879,9 +2108,13 @@
       );
     }
 
+    // Ordenar: sin clasificar primero, luego por prioridad, luego por fecha
     visibles.sort((a, b) => {
-      const p = ORDEN_PRIORIDAD[a.prioridad] - ORDEN_PRIORIDAD[b.prioridad];
-      if (p !== 0) return p;
+      const pA = a.prioridad || 'sin-clasificar';
+      const pB = b.prioridad || 'sin-clasificar';
+      const oA = ORDEN_PRIORIDAD[pA] ?? 0;
+      const oB = ORDEN_PRIORIDAD[pB] ?? 0;
+      if (oA !== oB) return oA - oB;
       return new Date(b.fecha_creacion) - new Date(a.fecha_creacion);
     });
 
@@ -1900,19 +2133,30 @@
         const numActividad = (t.historial || []).length;
         const puedeCambiar = perfilActual?.rol !== 'solicitante';
         const puedeEliminar = perfilActual?.rol === 'admin';
+        const sinClasificar = !t.prioridad;
+        
+        const badgesPrioridad = sinClasificar 
+          ? '<span class="badge badge-sin-clasificar">⚠ SIN CLASIFICAR</span>'
+          : `<span class="badge ${t.prioridad}">${t.prioridad.toUpperCase()}</span>`;
+        
+        const textoMeta = sinClasificar
+          ? '⚡ Pendiente de clasificación'
+          : `⚡ ${t.prioridad} · SLA ${SLA[t.prioridad]}h`;
+
         return `
-        <article class="ticket ${t.prioridad} ${vencido ? 'vencido' : ''}" onclick="abrirTicket(${t.id})">
+        <article class="ticket ${t.prioridad || 'sin-clasificar'} ${vencido ? 'vencido' : ''}" onclick="abrirTicket(${t.id})">
           <div class="ticket-head">
             <h3>${escapeHtml(t.titulo)}</h3>
             <span>
               ${vencido ? '<span class="badge badge-vencido">⚠ VENCIDO</span>' : ''}
+              ${badgesPrioridad}
               <span class="badge ${t.estado}">${t.estado.toUpperCase()}</span>
             </span>
           </div>
           ${t.descripcion ? '<p>' + escapeHtml(t.descripcion) + '</p>' : ''}
           <div class="ticket-meta">
             <span>👤 ${escapeHtml(t.solicitante)}</span>
-            <span>⚡ ${t.prioridad} · SLA ${SLA[t.prioridad]}h</span>
+            <span>${textoMeta}</span>
             <span>🕒 ${formatearFecha(t.fecha_creacion)}</span>
             ${numActividad > 0 ? `<span>💬 ${numActividad}</span>` : ''}
           </div>
@@ -2097,7 +2341,6 @@
       }
 
       if (!data || data.success !== true) {
-        console.error('Respuesta inesperada:', data);
         alert('No se confirmó la creación: ' + (data?.detalle || data?.error || 'Respuesta inesperada'));
         return;
       }
@@ -2146,6 +2389,8 @@
 
     const puedeCambiar = perfilActual?.rol !== 'solicitante';
     const puedeEliminar = perfilActual?.rol === 'admin';
+    const sinClasificar = !t.prioridad;
+    const puedeAsignarPrioridad = perfilActual?.rol !== 'solicitante' && sinClasificar;
 
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay activo';
@@ -2159,11 +2404,30 @@
             <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
               ${vencido ? '<span class="badge badge-vencido">⚠ VENCIDO</span>' : ''}
               <span class="badge ${t.estado}">${t.estado.toUpperCase()}</span>
-              <span class="badge ${t.prioridad}">${t.prioridad.toUpperCase()}</span>
+              ${sinClasificar 
+                ? '<span class="badge badge-sin-clasificar">⚠ SIN CLASIFICAR</span>' 
+                : `<span class="badge ${t.prioridad}">${t.prioridad.toUpperCase()}</span>`}
             </div>
           </div>
           <button class="modal-close" onclick="cerrarTicketModal()">✕</button>
         </div>
+
+        ${puedeAsignarPrioridad ? `
+          <div class="asignar-prioridad">
+            <div class="asignar-prioridad-titulo">
+              <span>⚠️</span> Este ticket no tiene prioridad asignada
+            </div>
+            <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">
+              Asígnale una prioridad para que el sistema pueda calcular el SLA.
+            </p>
+            <div class="asignar-prioridad-botones">
+              <button class="btn-prioridad" onclick="asignarPrioridad(${t.id}, 'alta')">🔴 Alta</button>
+              <button class="btn-prioridad" onclick="asignarPrioridad(${t.id}, 'media')">🟡 Media</button>
+              <button class="btn-prioridad" onclick="asignarPrioridad(${t.id}, 'baja')">🟢 Baja</button>
+            </div>
+          </div>
+        ` : ''}
+
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px; font-size:12.5px;">
           <div>
             <div style="color:var(--text-dim); font-size:11px; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Solicitante</div>
@@ -2183,11 +2447,14 @@
           </div>
           ${t.fecha_cierre ? `<div><div style="color:var(--text-dim); font-size:11px; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Cerrado</div><div style="color:var(--text);">✅ ${formatearFecha(t.fecha_cierre)}</div></div>` : ''}
         </div>
+
         ${t.descripcion ? `<div style="background: rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px 16px; font-size:13.5px; color:var(--text-muted); line-height:1.6; margin-bottom:20px; word-break:break-word;">${escapeHtml(t.descripcion)}</div>` : ''}
+
         <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px;">
           ${puedeCambiar ? `<button class="btn btn-ghost" onclick="cambiarEstado(${t.id}).then(() => { cerrarTicketModal(); abrirTicket(${t.id}); })">Cambiar estado</button>` : ''}
           ${puedeEliminar ? `<button class="btn btn-ghost" onclick="if(confirm('¿Eliminar?')) { eliminar(${t.id}).then(() => cerrarTicketModal()); }">Eliminar</button>` : ''}
         </div>
+
         <div class="timeline-title">
           <span>📝 Historial</span>
           <span style="color:var(--text-dim); font-weight:400; text-transform:none; letter-spacing:0;">(${historial.length})</span>
@@ -2206,6 +2473,7 @@
               `).join('')
           }
         </div>
+
         ${t.estado !== 'cerrado' ? `
           <div class="comment-form">
             <textarea id="comentTexto" placeholder="Escribe un comentario..."></textarea>
@@ -2249,7 +2517,7 @@
   /* GRÁFICOS */
   let chartTendencia = null;
   let chartPrioridad = null;
-  const COLORES = { accent: '#7c5cff', accent2: '#22d3ee', alta: '#ef4444', media: '#f59e0b', baja: '#10b981' };
+  const COLORES = { accent: '#7c5cff', accent2: '#22d3ee', alta: '#ef4444', media: '#f59e0b', baja: '#10b981', sin: '#f59e0b' };
 
   function actualizarGraficos() {
     actualizarTendencia();
@@ -2315,10 +2583,15 @@
     const alta = tickets.filter(t => t.prioridad === 'alta').length;
     const media = tickets.filter(t => t.prioridad === 'media').length;
     const baja = tickets.filter(t => t.prioridad === 'baja').length;
+    const sinClasificar = tickets.filter(t => !t.prioridad).length;
     const textColor = document.body.classList.contains('light') ? '#6a6a74' : '#8a8a94';
     const data = {
-      labels: ['Alta', 'Media', 'Baja'],
-      datasets: [{ data: [alta, media, baja], backgroundColor: [COLORES.alta, COLORES.media, COLORES.baja], borderWidth: 0, hoverOffset: 6 }]
+      labels: ['Alta', 'Media', 'Baja', 'Sin clasificar'],
+      datasets: [{ 
+        data: [alta, media, baja, sinClasificar], 
+        backgroundColor: [COLORES.alta, COLORES.media, COLORES.baja, COLORES.sin],
+        borderWidth: 0, hoverOffset: 6 
+      }]
     };
     if (chartPrioridad) {
       chartPrioridad.data = data;
@@ -2379,7 +2652,7 @@
       return [
         t.id, t.titulo, t.descripcion || '', t.solicitante,
         u?.correo || '', u?.telefono || '', u?.cargo || '', u?.area || '',
-        t.prioridad, t.estado, formatearFecha(t.fecha_creacion),
+        t.prioridad || 'sin clasificar', t.estado, formatearFecha(t.fecha_creacion),
         t.fecha_cierre ? formatearFecha(t.fecha_cierre) : '',
         estaVencido(t) ? 'SÍ' : 'NO', (t.historial || []).length
       ];
@@ -2403,6 +2676,7 @@
     const proceso = tickets.filter(t => t.estado === 'proceso').length;
     const cerrados = tickets.filter(t => t.estado === 'cerrado').length;
     const vencidos = tickets.filter(estaVencido).length;
+    const sinClasificar = tickets.filter(t => !t.prioridad).length;
     const pct = total ? Math.round((cerrados / total) * 100) : 0;
     const alta = tickets.filter(t => t.prioridad === 'alta').length;
     const media = tickets.filter(t => t.prioridad === 'media').length;
@@ -2431,7 +2705,7 @@
         <div class="pdf-kpi"><div class="pdf-kpi-label">Abiertos</div><div class="pdf-kpi-value">${abiertos}</div></div>
         <div class="pdf-kpi"><div class="pdf-kpi-label">En proceso</div><div class="pdf-kpi-value">${proceso}</div></div>
         <div class="pdf-kpi"><div class="pdf-kpi-label">Cerrados</div><div class="pdf-kpi-value">${cerrados}</div></div>
-        <div class="pdf-kpi danger"><div class="pdf-kpi-label">Vencidos</div><div class="pdf-kpi-value">${vencidos}</div></div>
+        <div class="pdf-kpi warning"><div class="pdf-kpi-label">Sin clasificar</div><div class="pdf-kpi-value">${sinClasificar}</div></div>
       </div>
       <div class="pdf-two-col">
         <div class="pdf-box">
@@ -2439,6 +2713,7 @@
           <div class="pdf-row"><span>🔴 Alta</span><b>${alta}</b></div>
           <div class="pdf-row"><span>🟡 Media</span><b>${media}</b></div>
           <div class="pdf-row"><span>🟢 Baja</span><b>${baja}</b></div>
+          <div class="pdf-row"><span>⚠ Sin clasificar</span><b>${sinClasificar}</b></div>
         </div>
         <div class="pdf-box">
           <h4>Indicadores clave</h4>
@@ -2455,7 +2730,7 @@
             <tr>
               <td>${escapeHtml(t.titulo)}</td>
               <td>${escapeHtml(t.solicitante)}</td>
-              <td><span class="pdf-badge ${t.prioridad}">${t.prioridad.toUpperCase()}</span></td>
+              <td><span class="pdf-badge ${t.prioridad || 'sin-clasificar'}">${t.prioridad ? t.prioridad.toUpperCase() : 'SIN CLASIFICAR'}</span></td>
               <td><span class="pdf-badge ${t.estado}">${t.estado.toUpperCase()}</span></td>
               <td>${formatearFecha(t.fecha_creacion)}</td>
             </tr>`).join('')}
@@ -2470,8 +2745,8 @@
               <tr>
                 <td>${escapeHtml(t.titulo)}</td>
                 <td>${escapeHtml(t.solicitante)}</td>
-                <td><span class="pdf-badge ${t.prioridad}">${t.prioridad.toUpperCase()}</span></td>
-                <td>${SLA[t.prioridad]}h</td>
+                <td><span class="pdf-badge ${t.prioridad || 'sin-clasificar'}">${t.prioridad ? t.prioridad.toUpperCase() : 'SIN CLASIFICAR'}</span></td>
+                <td>${t.prioridad ? SLA[t.prioridad] + 'h' : '—'}</td>
                 <td style="color:#ef4444; font-weight:600;">${formatearDuracion(horasTranscurridas(t) * 3600000)}</td>
               </tr>`).join('')}
           </tbody>
