@@ -169,6 +169,7 @@
     display: flex;
     align-items: center;
     gap: 14px;
+    flex-wrap: wrap;
   }
 
   .logo {
@@ -197,6 +198,7 @@
     border: 1px solid var(--border);
     background: var(--surface);
     flex-shrink: 0;
+    margin-left: auto;
   }
   .usuario-logueado b { color: var(--text); font-weight: 500; }
 
@@ -293,15 +295,12 @@
 
   /* ============ KPIs ============ */
   .kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 20px;
-}
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
 
-.kpi {
-  min-width: 0;
-}
   .kpi {
     min-width: 0;
     background: var(--surface);
@@ -634,7 +633,6 @@
     border-color: rgba(239, 68, 68, 0.4);
   }
 
-  /* Botones de prioridad para agentes */
   .btn-prioridad {
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid var(--border);
@@ -1314,18 +1312,19 @@
   body[data-rol="solicitante"] .ocultar-solicitante { display: none !important; }
 
   /* ============ RESPONSIVE ============ */
-  @media (max-width: 900px) {
-    .kpi-grid { grid-template-columns: repeat(3, 1fr); }
-    .pdf-kpis { grid-template-columns: repeat(3, 1fr); }
-  }
+
+  /* Tablets: 3 columnas (antes era 900px) */
   @media (max-width: 720px) {
-    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .pdf-kpis { grid-template-columns: repeat(3, 1fr); }
     .charts-grid { grid-template-columns: 1fr; }
     .chart-wrap { height: 200px; }
     .pdf-two-col { grid-template-columns: 1fr; }
     .pdf-kpis { grid-template-columns: repeat(2, 1fr); }
     .pdf-preview { padding: 24px; }
   }
+
+  /* Móvil: 2 columnas (antes era 560px) */
   @media (max-width: 560px) {
     .container {
       padding: 24px 14px 60px;
@@ -1344,8 +1343,8 @@
     header > div[style*="flex:1"] { min-width: 100%; order: -1; }
     .logo { width: 38px; height: 38px; font-size: 17px; border-radius: 12px; }
     .btn-icon { width: 34px; height: 34px; font-size: 14px; }
-    .usuario-logueado { font-size: 11px; padding: 5px 10px; }
-    .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+    .usuario-logueado { font-size: 11px; padding: 5px 10px; margin-left: 0; }
+    .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
     .kpi { padding: 14px; }
     .kpi-label { font-size: 10px; letter-spacing: 0.05em; }
     .kpi-value { font-size: 24px; }
@@ -1415,6 +1414,7 @@
     .timeline { max-height: 240px; }
     .asignar-prioridad-botones { flex-direction: column; }
   }
+
   @media (max-width: 380px) {
     .container {
       padding: 20px 12px 50px;
@@ -1673,7 +1673,7 @@
 
   function estaVencido(t) {
     if (t.estado === 'cerrado') return false;
-    if (!t.prioridad) return false; // Sin prioridad no tiene SLA aún
+    if (!t.prioridad) return false;
     return horasTranscurridas(t) > SLA[t.prioridad];
   }
 
@@ -1739,7 +1739,6 @@
     badge.className = 'rol-badge ' + rol;
     badge.style.display = 'inline-block';
 
-    // Nombre en bienvenida si es solicitante
     if (rol === 'solicitante') {
       const primerNombre = (perfil?.nombre || '').split(' ')[0] || '';
       document.getElementById('welcomeNombre').textContent = 
@@ -1890,7 +1889,7 @@
     
     let prioridad;
     if (perfilActual?.rol === 'solicitante') {
-      prioridad = null; // Sin prioridad - el agente asigna
+      prioridad = null;
     } else {
       prioridad = document.getElementById('prioridad').value || null;
     }
@@ -2016,7 +2015,6 @@
 
     if (error) { console.error(error); alert('Error al asignar prioridad'); return; }
     await cargarTickets();
-    // Reabrir modal si estaba abierto
     if (document.querySelector('.modal-overlay')) {
       cerrarTicketModal();
       setTimeout(() => abrirTicket(id), 100);
@@ -2092,12 +2090,10 @@
 
     let visibles = [...tickets];
 
-    // Si es solicitante, solo ve sus propios tickets
     if (perfilActual?.rol === 'solicitante') {
       visibles = visibles.filter(t => t.solicitante_id === perfilActual.usuario_id);
     }
 
-    // Filtros
     if (filtroActual === 'sin-clasificar') {
       visibles = visibles.filter(t => !t.prioridad);
     } else if (filtroActual !== 'todos') {
@@ -2112,7 +2108,6 @@
       );
     }
 
-    // Ordenar: sin clasificar primero, luego por prioridad, luego por fecha
     visibles.sort((a, b) => {
       const pA = a.prioridad || 'sin-clasificar';
       const pB = b.prioridad || 'sin-clasificar';
