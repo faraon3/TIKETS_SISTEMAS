@@ -1306,8 +1306,20 @@
 
 body[data-rol="admin"] .solo-admin,
 body[data-rol="admin"] .solo-admin-agente { display: block !important; }
-body[data-rol="agente"] .solo-admin-agente { display: block !important; }
-body[data-rol="solicitante"] .solo-solicitante { display: block !important; }
+body[data-rol="agente"] .solo-admin-agente:not(section.kpi-grid):not(section.charts-grid) {
+  display: block !important;
+}
+
+body[data-rol="agente"] section.kpi-grid.solo-admin-agente {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+}
+
+body[data-rol="agente"] section.charts-grid.solo-admin-agente {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) !important;
+}
+  body[data-rol="solicitante"] .solo-solicitante { display: block !important; }
 
 body[data-rol="admin"] .kpi-grid,
 body[data-rol="agente"] .kpi-grid { display: grid !important; }
