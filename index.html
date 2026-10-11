@@ -1304,18 +1304,17 @@
 .solo-admin-agente,
 .solo-solicitante { display: none !important; }
 
-/* Mostrar según rol */
 body[data-rol="admin"] .solo-admin,
 body[data-rol="admin"] .solo-admin-agente { display: block !important; }
 body[data-rol="agente"] .solo-admin-agente { display: block !important; }
 body[data-rol="solicitante"] .solo-solicitante { display: block !important; }
 
-/* Grids específicos que necesitan display grid */
 body[data-rol="admin"] .kpi-grid,
 body[data-rol="agente"] .kpi-grid { display: grid !important; }
 body[data-rol="admin"] .charts-grid,
 body[data-rol="agente"] .charts-grid { display: grid !important; }
 
+body[data-rol="solicitante"] .ocultar-solicitante { display: none !important; }
 /* Otros flex (por si acaso) */
 body[data-rol="admin"] .stats-card.solo-admin-agente,
 body[data-rol="agente"] .stats-card.solo-admin-agente { display: block !important; }
