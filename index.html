@@ -1299,18 +1299,28 @@
   .pdf-btn-secondary:hover { background: #e5e5ec; }
 
   /* ============ CONTROL POR ROL ============ */
-  .solo-admin,
-  .solo-admin-agente { display: none; }
+  /* Ocultar por defecto */
+.solo-admin,
+.solo-admin-agente,
+.solo-solicitante { display: none; }
 
-  body[data-rol="admin"] .solo-admin { display: revert; }
-  body[data-rol="admin"] .solo-admin-agente { display: revert; }
-  body[data-rol="agente"] .solo-admin-agente { display: revert; }
+/* Mostrar según rol */
+body[data-rol="admin"] .solo-admin:not(.kpi-grid):not(.charts-grid) { display: revert; }
+body[data-rol="admin"] .solo-admin-agente:not(.kpi-grid):not(.charts-grid) { display: revert; }
+body[data-rol="agente"] .solo-admin-agente:not(.kpi-grid):not(.charts-grid) { display: revert; }
+body[data-rol="solicitante"] .solo-solicitante { display: block; }
 
-  .solo-solicitante { display: none; }
-  body[data-rol="solicitante"] .solo-solicitante { display: block; }
+/* Grids: display grid cuando se muestran */
+body[data-rol="admin"] .kpi-grid.solo-admin-agente,
+body[data-rol="agente"] .kpi-grid.solo-admin-agente {
+  display: grid;
+}
+body[data-rol="admin"] .charts-grid.solo-admin-agente,
+body[data-rol="agente"] .charts-grid.solo-admin-agente {
+  display: grid;
+}
 
-  body[data-rol="solicitante"] .ocultar-solicitante { display: none !important; }
-
+body[data-rol="solicitante"] .ocultar-solicitante { display: none !important; }
   /* ============ RESPONSIVE ============ */
 
   /* Tablets: 3 columnas (antes era 900px) */
