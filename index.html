@@ -1466,6 +1466,28 @@ body[data-rol="agente"] section.charts-grid.solo-admin-agente {
     grid-template-columns: minmax(0, 1fr) !important;
   }
 }
+/* CORRECCIÓN DEFINITIVA: PANEL DE AGENTE Y ADMIN */
+body[data-rol="agente"] section.kpi-grid,
+body[data-rol="admin"] section.kpi-grid {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+body[data-rol="agente"] section.charts-grid,
+body[data-rol="admin"] section.charts-grid {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) !important;
+  gap: 16px !important;
+}
+
+@media (max-width: 720px) {
+  body[data-rol="agente"] section.charts-grid,
+  body[data-rol="admin"] section.charts-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+  
 </style>
 </head>
 <body>
