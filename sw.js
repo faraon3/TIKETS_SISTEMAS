@@ -3,7 +3,7 @@
    Versión: v10
    ============================================ */
 
-const CACHE_NAME = 'mesa-ayuda-v11';
+const CACHE_NAME = 'mesa-ayuda-v14';
 const ASSETS = [
   './',
   './index.html',
