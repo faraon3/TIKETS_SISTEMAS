@@ -1437,6 +1437,35 @@ body[data-rol="solicitante"] .ocultar-solicitante { display: none !important; }
     .ticket-actions { flex-direction: column; }
     .ticket-actions .btn { width: 100%; }
   }
+  /* AJUSTE DEL PANEL: KPI Y GRÁFICOS */
+.container {
+  max-width: 1200px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+body[data-rol="admin"] section.kpi-grid.solo-admin-agente,
+body[data-rol="agente"] section.kpi-grid.solo-admin-agente {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+body[data-rol="admin"] section.charts-grid.solo-admin-agente,
+body[data-rol="agente"] section.charts-grid.solo-admin-agente {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) !important;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 720px) {
+  body[data-rol="admin"] section.charts-grid.solo-admin-agente,
+  body[data-rol="agente"] section.charts-grid.solo-admin-agente {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
 </style>
 </head>
 <body>
